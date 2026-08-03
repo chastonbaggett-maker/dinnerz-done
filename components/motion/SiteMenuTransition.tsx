@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useOptionalMotionEditor } from "@/components/motion/MotionEditorProvider";
-import { MOTION_DRAFT_CHANGED_EVENT, readMotionDraft } from "@/lib/motion/draft-storage";
 import { normalizeMotionDocument } from "@/lib/motion/document";
 import {
   siteMenuPhaseClassName,
@@ -14,14 +12,7 @@ import { DEFAULT_SITE_MENU_TRANSITION, type SiteMenuTransitionSpec } from "@/lib
 import { cn } from "@/lib/utils";
 
 export function useSiteMenuTransitionSpec() {
-  const editor = useOptionalMotionEditor();
   const [spec, setSpec] = useState<SiteMenuTransitionSpec>(DEFAULT_SITE_MENU_TRANSITION);
-
-  useEffect(() => {
-    if (editor?.enabled) {
-      setSpec(editor.draft.menuTransition);
-    }
-  }, [editor?.enabled, editor?.draft.menuTransition]);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,36 +22,26 @@ export function useSiteMenuTransitionSpec() {
         const res = await fetch("/api/motion", { cache: "no-store" });
         if (!res.ok || cancelled) return;
         const doc = normalizeMotionDocument(await res.json());
-        if (!cancelled && !editor?.enabled) {
+        if (!cancelled) {
           setSpec(doc.menuTransition);
         }
       } catch {
-        if (!cancelled && !editor?.enabled) {
+        if (!cancelled) {
           setSpec(DEFAULT_SITE_MENU_TRANSITION);
         }
       }
     }
 
-    function syncFromDraft() {
-      if (editor?.enabled) return;
-      setSpec(readMotionDraft().menuTransition);
-    }
-
     void loadPublished();
-    syncFromDraft();
 
     const onPublished = () => void loadPublished();
-    const onDraftChanged = () => syncFromDraft();
-
     window.addEventListener("motion-specs-published", onPublished);
-    window.addEventListener(MOTION_DRAFT_CHANGED_EVENT, onDraftChanged);
 
     return () => {
       cancelled = true;
       window.removeEventListener("motion-specs-published", onPublished);
-      window.removeEventListener(MOTION_DRAFT_CHANGED_EVENT, onDraftChanged);
     };
-  }, [editor?.enabled]);
+  }, []);
 
   return spec;
 }

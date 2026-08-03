@@ -1,8 +1,9 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Home, Package, UtensilsCrossed, Snowflake } from "lucide-react";
 import {
   SiteMenuShelfContent,
@@ -12,15 +13,16 @@ import {
   SiteMenuTransitionFrame,
   useSiteMenuTransitionSpec,
 } from "@/components/motion/SiteMenuTransition";
-import {
-  MOTION_PREVIEW_PLAY_EVENT,
-  MOTION_PREVIEW_STOP_EVENT,
-  type MotionPreviewPlayDetail,
-} from "@/lib/motion/preview-playback";
 import { siteMenuTransitionDurationMs } from "@/lib/motion/site-menu-transition";
 import type { SiteMenuTransitionPhase } from "@/lib/motion/site-menu-transition";
 import { useDeliveryInRoute, useOrderWindowOpen } from "@/components/pwa/OrderWindowStatusProvider";
-import { hasUsedNavShelf, markNavShelfUsed } from "@/lib/pwa/nav-shelf-discovery";
+import {
+  APP_LOAD_COMPLETE_EVENT,
+  NAV_SHELF_APP_OPEN_PEEK,
+  recordNavShelfUse,
+  shouldPlayNavShelfAppOpenPeek,
+  shouldShowNavShelfPulse,
+} from "@/lib/pwa/nav-shelf-discovery";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -36,7 +38,7 @@ const links = [
   },
 ] as const;
 
-const EXTRA_SECTION_HEIGHT_PX = 260;
+const EXTRA_SECTION_HEIGHT_PX = 200;
 const OPEN_THRESHOLD = 0.28;
 const DRAG_THRESHOLD_PX = 6;
 
@@ -46,6 +48,8 @@ function clamp(value: number, min: number, max: number) {
 
 export function CustomerBottomNav() {
   const pathname = usePathname();
+  const { isSignedIn } = useAuth();
+  const isSignedInUser = isSignedIn === true;
   const orderWindowOpen = useOrderWindowOpen();
   const deliveryInRoute = useDeliveryInRoute();
   const menuTransition = useSiteMenuTransitionSpec();
@@ -57,24 +61,57 @@ export function CustomerBottomNav() {
   const [motionFrameKey, setMotionFrameKey] = useState(0);
   const [motionActive, setMotionActive] = useState(false);
   const [showHandlePulse, setShowHandlePulse] = useState(false);
+  const [peekAnimating, setPeekAnimating] = useState(false);
 
   const dragStartY = useRef(0);
   const dragStartProgress = useRef(0);
   const didDragRef = useRef(false);
   const closeTimerRef = useRef<number | null>(null);
-  const loopIntervalRef = useRef<number | null>(null);
-  const previewLoopRef = useRef(false);
+  const peekDelayTimerRef = useRef<number | null>(null);
+  const peekAnimatingRef = useRef(false);
+  const progressRef = useRef(0);
+  const isSignedInRef = useRef(isSignedInUser);
+  isSignedInRef.current = isSignedInUser;
 
   const shelfOpen = progress >= 0.98;
+  progressRef.current = progress;
 
   const rememberNavShelfUsed = useCallback(() => {
-    markNavShelfUsed();
-    setShowHandlePulse(false);
+    recordNavShelfUse(isSignedInUser);
+    setShowHandlePulse(shouldShowNavShelfPulse(isSignedInUser));
+  }, [isSignedInUser]);
+
+  useEffect(() => {
+    setShowHandlePulse(shouldShowNavShelfPulse(isSignedInUser));
+  }, [isSignedInUser]);
+
+  const clearPeekAnimation = useCallback(() => {
+    if (peekDelayTimerRef.current !== null) {
+      window.clearTimeout(peekDelayTimerRef.current);
+      peekDelayTimerRef.current = null;
+    }
+    setPeekAnimating(false);
   }, []);
 
   useEffect(() => {
-    setShowHandlePulse(!hasUsedNavShelf());
-  }, []);
+    function onAppLoadComplete() {
+      if (!shouldPlayNavShelfAppOpenPeek(isSignedInRef.current)) return;
+      if (progressRef.current > 0 || peekAnimatingRef.current) return;
+
+      peekDelayTimerRef.current = window.setTimeout(() => {
+        peekDelayTimerRef.current = null;
+        setMotionActive(false);
+        setPeekAnimating(true);
+      }, NAV_SHELF_APP_OPEN_PEEK.delayAfterAppLoadMs);
+    }
+
+    window.addEventListener(APP_LOAD_COMPLETE_EVENT, onAppLoadComplete);
+
+    return () => {
+      window.removeEventListener(APP_LOAD_COMPLETE_EVENT, onAppLoadComplete);
+      clearPeekAnimation();
+    };
+  }, [clearPeekAnimation]);
 
   const clearCloseTimer = useCallback(() => {
     if (closeTimerRef.current !== null) {
@@ -150,58 +187,9 @@ export function CustomerBottomNav() {
     return () => clearCloseTimer();
   }, [clearCloseTimer]);
 
-  useEffect(() => {
-    function clearLoop() {
-      if (loopIntervalRef.current !== null) {
-        window.clearInterval(loopIntervalRef.current);
-        loopIntervalRef.current = null;
-      }
-      previewLoopRef.current = false;
-    }
-
-    function replayPreview() {
-      closeShelf(() => {
-        window.setTimeout(() => openShelf(true), 60);
-      }, true);
-    }
-
-    function onPlay(event: Event) {
-      const detail = (event as CustomEvent<MotionPreviewPlayDetail>).detail;
-      if (detail.mode !== "menu-transition") return;
-
-      clearLoop();
-      previewLoopRef.current = detail.loop;
-      openShelf(true);
-
-      if (detail.loop) {
-        const cycleMs =
-          siteMenuTransitionDurationMs(menuTransition, "enter") +
-          siteMenuTransitionDurationMs(menuTransition, "exit") +
-          260;
-
-        loopIntervalRef.current = window.setInterval(replayPreview, cycleMs);
-      }
-    }
-
-    function onStop() {
-      clearLoop();
-      if (previewLoopRef.current) {
-        closeShelf(undefined, true);
-      }
-    }
-
-    window.addEventListener(MOTION_PREVIEW_PLAY_EVENT, onPlay);
-    window.addEventListener(MOTION_PREVIEW_STOP_EVENT, onStop);
-
-    return () => {
-      clearLoop();
-      window.removeEventListener(MOTION_PREVIEW_PLAY_EVENT, onPlay);
-      window.removeEventListener(MOTION_PREVIEW_STOP_EVENT, onStop);
-    };
-  }, [closeShelf, menuTransition, openShelf]);
-
   function onHandlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
     if (event.button !== 0) return;
+    clearPeekAnimation();
     dragStartY.current = event.clientY;
     dragStartProgress.current = progress;
     didDragRef.current = false;
@@ -244,6 +232,8 @@ export function CustomerBottomNav() {
     : menuPhase === "exit"
       ? siteMenuTransitionDurationMs(menuTransition, "exit")
       : siteMenuTransitionDurationMs(menuTransition, "enter");
+  const shelfExpanded = extraHeight > 0 || peekAnimating;
+  peekAnimatingRef.current = peekAnimating;
 
   const shelfContent = (
     <SiteMenuShelfContent
@@ -346,14 +336,25 @@ export function CustomerBottomNav() {
         </div>
 
         <div
-          aria-hidden={extraHeight === 0}
-          className="overflow-hidden border-t border-border/60"
-          style={{
-            height: extraHeight,
-            transition: isDragging ? "none" : `height ${transitionMs}ms ease-out`,
+          aria-hidden={!shelfExpanded}
+          className={cn("overflow-hidden", peekAnimating && "animate-nav-shelf-app-open-peek")}
+          style={
+            peekAnimating
+              ? ({
+                  "--nav-shelf-peek-height": `${EXTRA_SECTION_HEIGHT_PX}px`,
+                } as CSSProperties)
+              : {
+                  height: extraHeight,
+                  transition: isDragging ? "none" : `height ${transitionMs}ms ease-out`,
+                }
+          }
+          onAnimationEnd={(event) => {
+            if (event.target !== event.currentTarget || !peekAnimating) return;
+            setPeekAnimating(false);
+            setProgress(0);
           }}
         >
-          {extraHeight > 0 ? (
+          {shelfExpanded ? (
             <div className="h-full overflow-y-auto overscroll-contain touch-pan-y">
               {motionActive && menuTransition.enter.type !== "none" ? (
                 <SiteMenuTransitionFrame

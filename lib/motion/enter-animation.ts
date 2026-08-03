@@ -60,3 +60,20 @@ export function applyEnterAnimationToElement(
     }
   };
 }
+
+export function clearEnterAnimationInlineStyles(el: HTMLElement) {
+  el.style.removeProperty("animation");
+  el.style.removeProperty("animation-name");
+  el.style.removeProperty("animation-duration");
+  el.style.removeProperty("animation-timing-function");
+  el.style.removeProperty("animation-iteration-count");
+  el.style.removeProperty("animation-delay");
+  el.style.removeProperty("animation-fill-mode");
+
+  for (let index = el.style.length - 1; index >= 0; index -= 1) {
+    const property = el.style.item(index);
+    if (property.startsWith("--motion-")) {
+      el.style.removeProperty(property);
+    }
+  }
+}

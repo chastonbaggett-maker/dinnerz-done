@@ -1,9 +1,33 @@
-import { emptyMotionDocument } from "@/lib/motion/css";
 import { normalizeAppLoad } from "@/lib/motion/app-load";
 import { normalizeMotionEffect } from "@/lib/motion/effects";
 import { normalizePageTransition } from "@/lib/motion/page-transition";
 import { normalizeSiteMenuTransition } from "@/lib/motion/site-menu-transition";
-import type { MotionSpecDocument } from "@/lib/motion/types";
+import {
+  DEFAULT_APP_LOAD,
+  DEFAULT_PAGE_TRANSITION,
+  DEFAULT_SITE_MENU_TRANSITION,
+  type MotionSpecDocument,
+} from "@/lib/motion/types";
+
+export function emptyMotionDocument(): MotionSpecDocument {
+  return {
+    version: 1,
+    rules: [],
+    pageTransition: { ...DEFAULT_PAGE_TRANSITION },
+    menuTransition: {
+      enter: { ...DEFAULT_SITE_MENU_TRANSITION.enter },
+      exit: { ...DEFAULT_SITE_MENU_TRANSITION.exit },
+    },
+    appLoad: {
+      mode: DEFAULT_APP_LOAD.mode,
+      simple: { ...DEFAULT_APP_LOAD.simple },
+      elements: {
+        regions: DEFAULT_APP_LOAD.elements.regions.map((region) => ({ ...region })),
+      },
+    },
+    updatedAt: new Date().toISOString(),
+  };
+}
 
 export function normalizeMotionDocument(
   doc: Partial<MotionSpecDocument> | null | undefined

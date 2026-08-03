@@ -3,10 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { CartProvider } from "@/components/cart/CartProvider";
-import { MotionEditorShell } from "@/components/motion/MotionEditorShell";
 import { AppLoadHost } from "@/components/motion/AppLoadHost";
 import { AppLoadPrehideStyles } from "@/components/motion/AppLoadPrehideStyles";
-import { MotionRuntimeStyles } from "@/components/motion/MotionRuntimeStyles";
 import { readPublishedMotionSpecs } from "@/lib/motion/published-store";
 import "./globals.css";
 
@@ -51,10 +49,7 @@ export default async function RootLayout({
         <body className="min-h-full flex flex-col bg-background">
           <AppLoadPrehideStyles appLoad={motion.appLoad} />
           <CartProvider>
-            <MotionEditorShell>
-              <MotionRuntimeStyles />
-              <AppLoadHost initialAppLoad={motion.appLoad}>{children}</AppLoadHost>
-            </MotionEditorShell>
+            <AppLoadHost initialAppLoad={motion.appLoad}>{children}</AppLoadHost>
             <Toaster position="top-center" richColors />
           </CartProvider>
         </body>

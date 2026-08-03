@@ -2,14 +2,10 @@ import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { CustomerBottomNav } from "@/components/layout/CustomerBottomNav";
 import { HeaderPageIcon } from "@/components/layout/HeaderPageIcon";
-import { PageTransitionHost } from "@/components/motion/PageTransitionHost";
 import { InstallHomeHost } from "@/components/pwa/InstallHomeHost";
 import { OrderWindowStatusProvider } from "@/components/pwa/OrderWindowStatusProvider";
-import { readPublishedMotionSpecs } from "@/lib/motion/published-store";
 
-export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
-  const motion = await readPublishedMotionSpecs();
-
+export default function CustomerLayout({ children }: { children: React.ReactNode }) {
   return (
     <OrderWindowStatusProvider>
       <header
@@ -33,11 +29,7 @@ export default async function CustomerLayout({ children }: { children: React.Rea
           </div>
         </div>
       </header>
-      <main className="flex-1">
-        <PageTransitionHost initialPageTransition={motion.pageTransition}>
-          {children}
-        </PageTransitionHost>
-      </main>
+      <main className="flex-1">{children}</main>
       <CustomerBottomNav />
       <InstallHomeHost />
     </OrderWindowStatusProvider>

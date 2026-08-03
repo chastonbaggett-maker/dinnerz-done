@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from "fs/promises";
 import path from "path";
 import type { MotionSpecDocument } from "@/lib/motion/types";
-import { emptyMotionDocument } from "@/lib/motion/css";
+import { emptyMotionDocument } from "@/lib/motion/document";
 import { normalizeMotionDocument } from "@/lib/motion/document";
 
 const DATA_DIR = path.join(process.cwd(), "data");

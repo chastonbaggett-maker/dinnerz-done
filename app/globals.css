@@ -193,7 +193,8 @@
   .animate-gentle-pulse,
   .animate-gentle-pulse-emerald,
   .animate-gentle-pulse-sky,
-  .animate-nav-shelf-handle-pulse {
+  .animate-nav-shelf-handle-pulse,
+  .animate-nav-shelf-app-open-peek {
     animation: none;
   }
 }
@@ -214,14 +215,30 @@
   animation: nav-shelf-handle-pulse 1.75s ease-in-out infinite;
 }
 
-.motion-editor-highlight {
-  outline: 2px dashed oklch(0.62 0.19 250 / 0.9) !important;
-  outline-offset: 2px;
+@keyframes nav-shelf-app-open-peek {
+  0% {
+    height: 0;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  44% {
+    height: calc(var(--nav-shelf-peek-height, 200px) * 0.5);
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.42);
+  }
+  66% {
+    height: 0;
+    animation-timing-function: cubic-bezier(0.34, 1.28, 0.64, 1);
+  }
+  80% {
+    height: calc(var(--nav-shelf-peek-height, 200px) * 0.05);
+    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  100% {
+    height: 0;
+  }
 }
 
-.motion-editor-selected {
-  outline: 2px solid oklch(0.52 0.17 250) !important;
-  outline-offset: 2px;
+.animate-nav-shelf-app-open-peek {
+  animation: nav-shelf-app-open-peek 1.28s both;
 }
 
 @keyframes page-transition-fade-in {

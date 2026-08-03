@@ -183,16 +183,16 @@
         {
           "id": "main",
           "enabled": true,
-          "selector": "main > *",
+          "selector": "main",
           "animationName": "motion-fade-in",
           "durationMs": 1100,
           "easing": "ease-out",
           "opacityFrom": 0,
           "offsetPx": 16,
           "scaleFrom": 97,
-          "staggerMs": 60,
-          "baseDelayMs": 500,
-          "maxElements": 32
+          "staggerMs": 0,
+          "baseDelayMs": 0,
+          "maxElements": 1
         },
         {
           "id": "bottom-nav",
