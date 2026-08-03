@@ -16,7 +16,7 @@ import {
   orderNumberCounters,
   newId,
 } from "@/lib/db/schema";
-import { getDefaultCutoff, getTomorrowDateString, getWeekdayMenuDates, DEFAULT_TIMEZONE } from "@/lib/dates";
+import { getDefaultCutoff, getTomorrowDateString, getUpcomingMenuDates, DEFAULT_TIMEZONE } from "@/lib/dates";
 import type {
   BusinessSettings,
   CartLine,
@@ -347,7 +347,7 @@ function getDemoCustomizationGroups(dailyMenuItemId: string, menuItemId: string)
 }
 
 function getDemoWeekDates() {
-  return getWeekdayMenuDates(DEMO_WEEK_ITEM_IDS.length, DEMO_SETTINGS.timezone);
+  return getUpcomingMenuDates(DEMO_WEEK_ITEM_IDS.length, DEMO_SETTINGS.timezone);
 }
 
 function getDemoDailyMenuForDate(serviceDate: string): DailyMenu | null {
@@ -882,6 +882,17 @@ export async function getUpcomingPublishedMenus(timezone = DEFAULT_TIMEZONE) {
   }
 
   return rows.map(mapDailyMenu);
+}
+
+export async function getUpcomingMenusWithItems(timezone = DEFAULT_TIMEZONE) {
+  const menus = await getUpcomingPublishedMenus(timezone);
+  const results = await Promise.all(
+    menus.map(async (menu) => {
+      const data = await getPublishedMenuForDate(menu.service_date);
+      return data ?? null;
+    })
+  );
+  return results.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 }
 
 export async function getDailyMenus() {

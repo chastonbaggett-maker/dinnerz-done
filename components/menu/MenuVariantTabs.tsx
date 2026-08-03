@@ -13,7 +13,7 @@ export function MenuVariantTabs({ value, onValueChange }: MenuVariantTabsProps) 
     <Tabs
       value={value}
       onValueChange={(next) => onValueChange(next as MenuVariant)}
-      className="w-full"
+      className="mt-2 w-full"
     >
       <TabsList className="grid !h-auto min-h-14 w-full grid-cols-2 gap-1 rounded-2xl p-1.5">
         <TabsTrigger

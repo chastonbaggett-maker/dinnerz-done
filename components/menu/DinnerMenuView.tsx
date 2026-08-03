@@ -1,83 +1,111 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { DailyMenu, DailyMenuItem } from "@/lib/types";
-import { filterItemsByMenuVariant, type MenuVariant } from "@/lib/menu-dietary";
-import { canPlaceOrderToday } from "@/lib/orders/cutoff";
+import { type MenuVariant } from "@/lib/menu-dietary";
+import { canPlaceOrderToday, getPreferredMenuDate } from "@/lib/orders/cutoff";
 import { useCart } from "@/components/cart/CartProvider";
-import { CutoffBanner } from "@/components/menu/CutoffBanner";
-import { MenuDatePicker } from "@/components/menu/MenuDatePicker";
 import { MenuVariantTabs } from "@/components/menu/MenuVariantTabs";
-import { MenuCard } from "@/components/menu/MenuCard";
+import { MenuDatePicker } from "@/components/menu/MenuDatePicker";
+import { MenuDayContent } from "@/components/menu/MenuDayContent";
+import { CutoffBanner } from "@/components/menu/CutoffBanner";
 import { CustomizationSheet } from "@/components/menu/CustomizationSheet";
 import { CartBar } from "@/components/cart/CartBar";
-import { PageIcon } from "@/components/layout/PageIcon";
 
-interface DinnerMenuViewProps {
+export interface MenuWithItems {
   menu: DailyMenu;
   items: DailyMenuItem[];
-  upcomingMenus: DailyMenu[];
-  timezone: string;
-  businessName: string;
 }
 
-export function DinnerMenuView({ menu, items, upcomingMenus, timezone, businessName }: DinnerMenuViewProps) {
+interface DinnerMenuViewProps {
+  menusWithItems: MenuWithItems[];
+  timezone: string;
+  businessName: string;
+  initialExpandedDate?: string;
+}
+
+function getDefaultSelectedDate(
+  menusWithItems: MenuWithItems[],
+  timezone: string,
+  initialDate?: string
+) {
+  const menus = menusWithItems.map(({ menu }) => menu);
+
+  if (initialDate && menus.some((menu) => menu.service_date === initialDate)) {
+    return initialDate;
+  }
+
+  return getPreferredMenuDate(menus, timezone);
+}
+
+export function DinnerMenuView({
+  menusWithItems,
+  timezone,
+  businessName,
+  initialExpandedDate,
+}: DinnerMenuViewProps) {
   const { setMenuContext } = useCart();
   const [selectedItem, setSelectedItem] = useState<DailyMenuItem | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [menuVariant, setMenuVariant] = useState<MenuVariant>("standard");
+  const [selectedDate, setSelectedDate] = useState(() =>
+    getDefaultSelectedDate(menusWithItems, timezone, initialExpandedDate)
+  );
 
-  const orderingOpen = canPlaceOrderToday(menu, timezone);
-  const visibleItems = filterItemsByMenuVariant(items, menuVariant);
+  const menus = useMemo(() => menusWithItems.map(({ menu }) => menu), [menusWithItems]);
+
+  const selectedEntry = useMemo(
+    () => menusWithItems.find(({ menu }) => menu.service_date === selectedDate) ?? menusWithItems[0],
+    [menusWithItems, selectedDate]
+  );
+
+  const orderableEntry = useMemo(
+    () => menusWithItems.find(({ menu }) => canPlaceOrderToday(menu, timezone)),
+    [menusWithItems, timezone]
+  );
 
   useEffect(() => {
     setMenuVariant("standard");
-  }, [menu.service_date]);
+  }, [selectedDate]);
 
   useEffect(() => {
-    setMenuContext(menu.id, menu.service_date);
-  }, [menu.id, menu.service_date, setMenuContext]);
+    const cartMenu = orderableEntry ?? selectedEntry;
+    if (cartMenu) {
+      setMenuContext(cartMenu.menu.id, cartMenu.menu.service_date);
+    }
+  }, [orderableEntry, selectedEntry, setMenuContext]);
 
   return (
     <>
       <div className="mx-auto w-full max-w-lg space-y-6 px-4 pb-36 pt-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <PageIcon variant="menu" />
-            <h1 className="text-2xl font-semibold tracking-tight">Menu</h1>
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {businessName} · Dinners at your door
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          {businessName} · Dinners at your door
+        </p>
 
-        <MenuDatePicker menus={upcomingMenus} currentDate={menu.service_date} timezone={timezone} />
+        {selectedEntry && (
+          <section className="space-y-4">
+            <CutoffBanner menu={selectedEntry.menu} timezone={timezone} />
 
-        <CutoffBanner menu={menu} timezone={timezone} />
+            <MenuDatePicker
+              menus={menus}
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              timezone={timezone}
+            />
 
-        <MenuVariantTabs value={menuVariant} onValueChange={setMenuVariant} />
+            <MenuVariantTabs value={menuVariant} onValueChange={setMenuVariant} />
 
-        <div className="space-y-4">
-          {visibleItems.length === 0 ? (
-            <p className="rounded-2xl border border-dashed p-8 text-center text-muted-foreground">
-              {menuVariant === "dairy-free"
-                ? "No dairy-free items on this menu today. Try the standard menu."
-                : "No items on this menu yet. Check back soon."}
-            </p>
-          ) : (
-            visibleItems.map((item) => (
-              <MenuCard
-                key={item.id}
-                item={item}
-                orderingOpen={orderingOpen}
-                onCustomize={(i) => {
-                  setSelectedItem(i);
-                  setSheetOpen(true);
-                }}
-              />
-            ))
-          )}
-        </div>
+            <MenuDayContent
+              items={selectedEntry.items}
+              menuVariant={menuVariant}
+              orderingOpen={canPlaceOrderToday(selectedEntry.menu, timezone)}
+              onCustomize={(item) => {
+                setSelectedItem(item);
+                setSheetOpen(true);
+              }}
+            />
+          </section>
+        )}
       </div>
 
       <CustomizationSheet item={selectedItem} open={sheetOpen} onOpenChange={setSheetOpen} />

@@ -1,6 +1,10 @@
 import { Clock } from "lucide-react";
-import { formatOrderByDeadline, formatServiceDate, getOrderWindowBadgeState } from "@/lib/dates";
-import { canOrderFromMenu } from "@/lib/orders/cutoff";
+import {
+  formatMenuOpensOnDay,
+  formatOrderByDeadline,
+  formatServiceDate,
+  getOrderWindowBadgeState,
+} from "@/lib/dates";
 import type { DailyMenu } from "@/lib/types";
 import { CutoffCountdown } from "@/components/menu/CutoffCountdown";
 import { OrderWindowBadge } from "@/components/menu/order-window-badge";
@@ -16,12 +20,13 @@ interface CutoffBannerProps {
 }
 
 export function CutoffBanner({ menu, timezone, heading, subheading }: CutoffBannerProps) {
-  const orderingOpen = canOrderFromMenu(menu, timezone);
-  const badge = getOrderWindowBadgeState(menu.order_cutoff_at, orderingOpen, timezone);
+  const badge = getOrderWindowBadgeState(menu.order_cutoff_at, timezone);
   const defaultSubheading =
     badge.tone === "active"
       ? formatOrderByDeadline(menu.order_cutoff_at, timezone)
-      : "Always next day delivery";
+      : badge.tone === "upcoming"
+        ? formatMenuOpensOnDay(menu.order_cutoff_at, timezone)
+        : "Always next day delivery";
 
   return (
     <div
@@ -50,7 +55,16 @@ export function CutoffBanner({ menu, timezone, heading, subheading }: CutoffBann
         )}
       >
         <Clock className="size-4 shrink-0" />
-        <CutoffCountdown cutoffAt={menu.order_cutoff_at} timezone={timezone} />
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+          <CutoffCountdown
+            cutoffAt={menu.order_cutoff_at}
+            timezone={timezone}
+            compact={badge.tone === "active"}
+          />
+          {badge.tone === "active" && (
+            <span className="shrink-0 font-semibold tracking-tight">Order Now</span>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -6,9 +6,11 @@ import { formatCutoffCountdownAt } from "@/lib/dates";
 interface CutoffCountdownProps {
   cutoffAt: string;
   timezone: string;
+  /** Show only the time remaining (e.g. 9h 8m 5s). */
+  compact?: boolean;
 }
 
-export function CutoffCountdown({ cutoffAt, timezone }: CutoffCountdownProps) {
+export function CutoffCountdown({ cutoffAt, timezone, compact }: CutoffCountdownProps) {
   const [elapsedMs, setElapsedMs] = useState(0);
 
   useEffect(() => {
@@ -19,5 +21,9 @@ export function CutoffCountdown({ cutoffAt, timezone }: CutoffCountdownProps) {
     return () => clearInterval(id);
   }, [cutoffAt]);
 
-  return <span className="tabular-nums">{formatCutoffCountdownAt(cutoffAt, timezone, elapsedMs)}</span>;
+  return (
+    <span className="tabular-nums">
+      {formatCutoffCountdownAt(cutoffAt, timezone, elapsedMs, { compact })}
+    </span>
+  );
 }

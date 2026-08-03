@@ -1,14 +1,12 @@
-import { getBusinessSettings, getNextAvailableMenu, getUpcomingPublishedMenus } from "@/lib/db/queries";
+import { getBusinessSettings, getUpcomingMenusWithItems } from "@/lib/db/queries";
+import { getPreferredMenuDate } from "@/lib/orders/cutoff";
 import { DinnerMenuView } from "@/components/menu/DinnerMenuView";
 
 export default async function MenuPage() {
-  const [settings, menuData, upcomingMenus] = await Promise.all([
-    getBusinessSettings(),
-    getNextAvailableMenu(),
-    getUpcomingPublishedMenus(),
-  ]);
+  const settings = await getBusinessSettings();
+  const menusWithItems = await getUpcomingMenusWithItems(settings.timezone);
 
-  if (!menuData) {
+  if (menusWithItems.length === 0) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 pb-36 text-center">
         <h1 className="text-2xl font-semibold">Menu</h1>
@@ -19,13 +17,17 @@ export default async function MenuPage() {
     );
   }
 
+  const initialDate = getPreferredMenuDate(
+    menusWithItems.map(({ menu }) => menu),
+    settings.timezone
+  );
+
   return (
     <DinnerMenuView
-      menu={menuData.menu}
-      items={menuData.items}
-      upcomingMenus={upcomingMenus}
+      menusWithItems={menusWithItems}
       timezone={settings.timezone}
       businessName={settings.business_name}
+      initialExpandedDate={initialDate}
     />
   );
 }

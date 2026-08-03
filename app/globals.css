@@ -196,3 +196,13 @@
     animation: none;
   }
 }
+
+.motion-editor-highlight {
+  outline: 2px dashed oklch(0.62 0.19 250 / 0.9) !important;
+  outline-offset: 2px;
+}
+
+.motion-editor-selected {
+  outline: 2px solid oklch(0.52 0.17 250) !important;
+  outline-offset: 2px;
+}

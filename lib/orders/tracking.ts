@@ -146,3 +146,14 @@ export function isTrackingComplete(
   const stepStates = getTrackingStepStates(status, fulfillmentType, context);
   return stepStates.length > 0 && stepStates.every((state) => state === "completed");
 }
+
+/** Step 3 — driver is en route to this delivery (next stop on an active route). */
+export function isDeliveryInRoute(
+  status: OrderStatus,
+  fulfillmentType: FulfillmentType,
+  context: TrackingProgressContext = {}
+) {
+  if (fulfillmentType !== "delivery") return false;
+  if (status === "completed" || status === "cancelled") return false;
+  return getEffectiveDeliveryStepIndex(status, context) === 3;
+}

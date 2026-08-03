@@ -5,9 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Snowflake, UtensilsCrossed } from "lucide-react";
 import type { DailyMenu } from "@/lib/types";
-import { formatServiceDate, getOrderWindowBadgeState } from "@/lib/dates";
-import { canOrderFromMenu } from "@/lib/orders/cutoff";
-import { CutoffCountdown } from "@/components/menu/CutoffCountdown";
+import { getOrderWindowBadgeState } from "@/lib/dates";
 import { OrderWindowBadge } from "@/components/menu/order-window-badge";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -130,30 +128,15 @@ interface HomeViewProps {
 }
 
 export function HomeView({ menu, timezone, frozenEnabled }: HomeViewProps) {
-  const orderingOpen = menu ? canOrderFromMenu(menu, timezone) : false;
-  const badge = menu
-    ? getOrderWindowBadgeState(menu.order_cutoff_at, orderingOpen, timezone)
-    : null;
+  const badge = menu ? getOrderWindowBadgeState(menu.order_cutoff_at, timezone) : null;
   const { activeStep, stepRefs } = useScrollActiveStep(HOW_IT_WORKS.length);
 
   return (
     <>
       <div className="mx-auto w-full max-w-lg space-y-8 px-4 pb-10 pt-8">
-        <section className="space-y-3">
-          <h1 className="text-3xl font-semibold leading-tight tracking-tight">
-            Dinner delivered.
-            <br />
-            Order Now for tomorrow.
-          </h1>
-          <p className="text-muted-foreground">
-            Fresh home-cooked meals to your door — plus freezer-ready lunches you can add to any
-            order.
-          </p>
-        </section>
-
-        {menu && (
+        {menu ? (
           <div className="overflow-hidden rounded-2xl border bg-card">
-            <div className="relative aspect-[2.2/1] w-full">
+            <div className="relative aspect-square w-full">
               <Image
                 src={HOME_HERO_IMAGE}
                 alt="Fresh home-cooked dinners ready to deliver"
@@ -162,47 +145,59 @@ export function HomeView({ menu, timezone, frozenEnabled }: HomeViewProps) {
                 sizes="(max-width: 512px) 100vw, 512px"
                 className="object-cover object-center"
               />
+              <div
+                className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/15"
+                aria-hidden
+              />
+              <div className="absolute inset-x-0 bottom-0 z-10 space-y-2 p-5 text-white">
+                <h1 className="text-3xl font-semibold leading-tight tracking-tight">
+                  Dinner delivered.
+                  <br />
+                  Order Now for Tomorrow.
+                </h1>
+                <p className="text-sm leading-relaxed text-white/90">
+                  Fresh home-cooked meals to your door — plus freezer-ready lunches you can add to
+                  any order.
+                </p>
+              </div>
               {badge && (
                 <div className="absolute top-3 right-3 z-10">
                   <OrderWindowBadge label={badge.label} tone={badge.tone} className="shadow-md" />
                 </div>
               )}
             </div>
-            <div className="p-5">
-              <div>
-                <p className="text-sm text-muted-foreground">Next delivery</p>
-                <p className="text-xl font-semibold">{formatServiceDate(menu.service_date)}</p>
+            <Link
+              href="/menu"
+              className="group flex items-center gap-4 rounded-b-2xl border border-primary bg-primary p-5 text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            >
+              <div className="flex size-14 items-center justify-center rounded-xl bg-white/15 text-white">
+                <UtensilsCrossed className="size-7" />
               </div>
-              <p
-                className={cn(
-                  "mt-2 text-sm",
-                  badge?.tone === "active" ? "font-medium text-emerald-600" : "text-muted-foreground"
-                )}
-              >
-                <CutoffCountdown cutoffAt={menu.order_cutoff_at} timezone={timezone} />
-              </p>
-            </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-semibold">Tomorrow&apos;s Dinner Menu</h2>
+                <p className="text-sm text-primary-foreground/80">
+                  Browse dinners, customize your order, and pick a delivery window.
+                </p>
+              </div>
+              <ArrowRight className="size-5 text-primary-foreground/70 transition-transform group-hover:translate-x-0.5" />
+            </Link>
           </div>
+        ) : (
+          <section className="space-y-3">
+            <h1 className="text-3xl font-semibold leading-tight tracking-tight">
+              Dinner delivered.
+              <br />
+              Order Now for Tomorrow.
+            </h1>
+            <p className="text-muted-foreground">
+              Fresh home-cooked meals to your door — plus freezer-ready lunches you can add to any
+              order.
+            </p>
+          </section>
         )}
 
-        <section className="grid gap-4">
-          <Link
-            href="/menu"
-            className="group flex items-center gap-4 rounded-2xl border border-primary bg-primary p-5 text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-          >
-            <div className="flex size-14 items-center justify-center rounded-xl bg-white/15 text-white">
-              <UtensilsCrossed className="size-7" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-semibold">Tomorrow&apos;s Dinner Menu</h2>
-              <p className="text-sm text-primary-foreground/80">
-                Browse dinners, customize your order, and pick a delivery window.
-              </p>
-            </div>
-            <ArrowRight className="size-5 text-primary-foreground/70 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-
-          {frozenEnabled && (
+        {frozenEnabled && (
+          <section className="grid gap-4">
             <Link
               href="/freezey-lunches"
               className={cn(
@@ -226,8 +221,8 @@ export function HomeView({ menu, timezone, frozenEnabled }: HomeViewProps) {
               </div>
               <ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
             </Link>
-          )}
-        </section>
+          </section>
+        )}
       </div>
 
       <div className="border-t border-primary/15 bg-gradient-to-b from-primary/10 via-primary/5 to-primary/5 dark:border-primary/25 dark:from-primary/15 dark:via-primary/10 dark:to-primary/10">

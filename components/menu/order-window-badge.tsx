@@ -5,10 +5,13 @@ import { cn } from "@/lib/utils";
 const mutedRed =
   "border border-red-200/70 bg-red-50 text-red-800 [a]:hover:bg-red-100/80 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200";
 
+const mutedBlue =
+  "border border-primary/30 bg-primary/10 text-primary [a]:hover:bg-primary/15 dark:border-primary/40 dark:bg-primary/15 dark:text-primary-foreground";
+
 const toneClassName: Record<OrderWindowBadgeTone, string> = {
   active:
     "animate-gentle-pulse-emerald border-transparent bg-emerald-600 text-white [a]:hover:bg-emerald-600/90",
-  upcoming: mutedRed,
+  upcoming: mutedBlue,
   closed: mutedRed,
 };
 

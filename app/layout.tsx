@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { CartProvider } from "@/components/cart/CartProvider";
+import { MotionEditorShell } from "@/components/motion/MotionEditorShell";
+import { MotionRuntimeStyles } from "@/components/motion/MotionRuntimeStyles";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -43,7 +45,10 @@ export default function RootLayout({
       <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
         <body className="min-h-full flex flex-col bg-background">
           <CartProvider>
-            {children}
+            <MotionEditorShell>
+              <MotionRuntimeStyles />
+              {children}
+            </MotionEditorShell>
             <Toaster position="top-center" richColors />
           </CartProvider>
         </body>

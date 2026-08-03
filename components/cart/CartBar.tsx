@@ -13,7 +13,7 @@ export function CartBar() {
   if (itemCount === 0) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-16 z-40 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <div className="fixed inset-x-0 bottom-[5.2rem] z-40 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <Link
         href="/cart"
         className={cn(
