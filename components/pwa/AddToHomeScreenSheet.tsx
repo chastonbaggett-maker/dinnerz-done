@@ -205,20 +205,57 @@ function Step({
 }
 
 export function InstallPreviewIcons({ kind }: { kind: InstallKind }) {
+  const icons = getInstallPreviewIcons(kind);
+
   return (
-    <div className="flex items-center gap-2" aria-hidden>
-      <span className="flex size-10 items-center justify-center rounded-xl border bg-muted/40">
-        <Share2 className="size-4" />
-      </span>
-      <span className="text-muted-foreground">→</span>
-      <span
-        className={cn(
-          "flex size-10 items-center justify-center rounded-xl border bg-primary/10 text-primary",
-          kind === "desktop-safari" && "rounded-[0.65rem]"
-        )}
-      >
-        <Download className="size-4" />
-      </span>
+    <div className="flex items-center gap-1" aria-hidden>
+      {icons.map((icon, index) => (
+        <span key={`${kind}-${index}`} className="flex items-center gap-1">
+          {index > 0 ? <span className="text-[10px] text-muted-foreground">→</span> : null}
+          <span
+            className={cn(
+              "flex size-8 items-center justify-center rounded-lg border bg-muted/40 sm:size-9 sm:rounded-xl",
+              icon.highlight && "bg-primary/10 text-primary"
+            )}
+          >
+            {icon.node}
+          </span>
+        </span>
+      ))}
     </div>
   );
+}
+
+function getInstallPreviewIcons(kind: InstallKind) {
+  const iconClass = "size-3.5 sm:size-4";
+
+  if (kind === "ios") {
+    return [
+      { node: <Ellipsis className={iconClass} /> },
+      { node: <Share2 className={iconClass} /> },
+      { node: <MoreHorizontal className={iconClass} /> },
+      { node: <PlusSquare className={iconClass} />, highlight: true },
+    ];
+  }
+
+  if (kind === "android") {
+    return [
+      { node: <MoreHorizontal className={iconClass} /> },
+      { node: <Smartphone className={iconClass} />, highlight: true },
+    ];
+  }
+
+  if (kind === "desktop-safari") {
+    return [
+      { node: <FileText className={iconClass} /> },
+      { node: <Share2 className={iconClass} /> },
+      { node: <Download className={cn(iconClass, "rounded-[0.65rem]")} />, highlight: true },
+    ];
+  }
+
+  return [
+    { node: <MoreHorizontal className={iconClass} /> },
+    { node: <Share2 className={iconClass} /> },
+    { node: <Download className={iconClass} />, highlight: true },
+  ];
 }

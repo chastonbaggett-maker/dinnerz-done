@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
 import { CustomerBottomNav } from "@/components/layout/CustomerBottomNav";
+import { HeaderAuthControl } from "@/components/layout/HeaderAuthControl";
 import { HeaderPageIcon } from "@/components/layout/HeaderPageIcon";
 import { InstallHomeHost } from "@/components/pwa/InstallHomeHost";
 import { OrderWindowStatusProvider } from "@/components/pwa/OrderWindowStatusProvider";
@@ -25,7 +25,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           </Link>
           <div className="flex items-center gap-4">
             <HeaderPageIcon />
-            <UserButton />
+            <HeaderAuthControl />
           </div>
         </div>
       </header>

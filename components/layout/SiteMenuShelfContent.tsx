@@ -60,7 +60,7 @@ export function SiteMenuShelfContent({
                   : "text-muted-foreground hover:bg-muted/60"
               )}
             >
-              <Icon className="size-5 shrink-0" />
+              <Icon className="size-[2.16rem] shrink-0" />
               <span className="text-center leading-tight">{label}</span>
             </Link>
           );

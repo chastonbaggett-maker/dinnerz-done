@@ -312,7 +312,7 @@ export function CustomerBottomNav() {
                 )}
               >
                 <span className="relative">
-                  <Icon className="size-5" />
+                  <Icon className="size-[2.16rem]" />
                   {href === "/menu" && orderWindowOpen !== null && (
                     <span
                       aria-hidden
