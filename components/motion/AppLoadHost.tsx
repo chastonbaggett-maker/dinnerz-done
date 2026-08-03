@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useOptionalMotionEditor } from "@/components/motion/MotionEditorProvider";
 import {
   cleanupAppLoadAnimations,
   runAppLoadAnimations,
 } from "@/lib/motion/app-load";
+import { removeAppLoadPrehideStyles } from "@/lib/motion/app-load-prehide";
 import { MOTION_DRAFT_CHANGED_EVENT, readMotionDraft } from "@/lib/motion/draft-storage";
 import { normalizeMotionDocument } from "@/lib/motion/document";
 import {
@@ -16,13 +17,19 @@ import {
 import { DEFAULT_APP_LOAD, type AppLoadSpec } from "@/lib/motion/types";
 import { cn } from "@/lib/utils";
 
-export function AppLoadHost({ children }: { children: ReactNode }) {
+export function AppLoadHost({
+  children,
+  initialAppLoad,
+}: {
+  children: ReactNode;
+  initialAppLoad?: AppLoadSpec;
+}) {
   const editor = useOptionalMotionEditor();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const cleanupsRef = useRef<Array<() => void>>([]);
   const loopIntervalRef = useRef<number | null>(null);
   const playedRef = useRef(false);
-  const [spec, setSpec] = useState<AppLoadSpec>(DEFAULT_APP_LOAD);
+  const [spec, setSpec] = useState<AppLoadSpec>(initialAppLoad ?? DEFAULT_APP_LOAD);
 
   useEffect(() => {
     if (editor?.enabled) {
@@ -43,7 +50,7 @@ export function AppLoadHost({ children }: { children: ReactNode }) {
         }
       } catch {
         if (!cancelled && !editor?.enabled) {
-          setSpec(DEFAULT_APP_LOAD);
+          setSpec(initialAppLoad ?? DEFAULT_APP_LOAD);
         }
       }
     }
@@ -67,7 +74,7 @@ export function AppLoadHost({ children }: { children: ReactNode }) {
       window.removeEventListener("motion-specs-published", onPublished);
       window.removeEventListener(MOTION_DRAFT_CHANGED_EVENT, onDraftChanged);
     };
-  }, [editor?.enabled]);
+  }, [editor?.enabled, initialAppLoad]);
 
   useEffect(() => {
     function clearLoop() {
@@ -81,6 +88,7 @@ export function AppLoadHost({ children }: { children: ReactNode }) {
       cleanupAppLoadAnimations(cleanupsRef.current);
       cleanupsRef.current = [];
       clearLoop();
+      removeAppLoadPrehideStyles();
 
       const result = runAppLoadAnimations(spec, {
         root: wrapperRef.current ?? undefined,
@@ -114,6 +122,7 @@ export function AppLoadHost({ children }: { children: ReactNode }) {
       clearLoop();
       cleanupAppLoadAnimations(cleanupsRef.current);
       cleanupsRef.current = [];
+      removeAppLoadPrehideStyles();
     }
 
     window.addEventListener(MOTION_PREVIEW_PLAY_EVENT, onPreviewPlay);
@@ -127,13 +136,21 @@ export function AppLoadHost({ children }: { children: ReactNode }) {
     };
   }, [spec]);
 
-  useEffect(() => {
-    if (editor?.enabled) return;
-    if (spec.mode === "none") return;
+  useLayoutEffect(() => {
+    if (editor?.enabled) {
+      removeAppLoadPrehideStyles();
+      return;
+    }
+    if (spec.mode === "none") {
+      removeAppLoadPrehideStyles();
+      return;
+    }
     if (!wrapperRef.current) return;
     if (playedRef.current) return;
 
     playedRef.current = true;
+    removeAppLoadPrehideStyles();
+
     const result = runAppLoadAnimations(spec, { root: wrapperRef.current });
     if (result) {
       cleanupsRef.current = result.cleanups;
@@ -141,7 +158,7 @@ export function AppLoadHost({ children }: { children: ReactNode }) {
   }, [spec, editor?.enabled]);
 
   return (
-    <div ref={wrapperRef} className={cn("flex min-h-full flex-1 flex-col")}>
+    <div ref={wrapperRef} className={cn("app-load-host flex min-h-full flex-1 flex-col")}>
       {children}
     </div>
   );

@@ -5,7 +5,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { MotionEditorShell } from "@/components/motion/MotionEditorShell";
 import { AppLoadHost } from "@/components/motion/AppLoadHost";
+import { AppLoadPrehideStyles } from "@/components/motion/AppLoadPrehideStyles";
 import { MotionRuntimeStyles } from "@/components/motion/MotionRuntimeStyles";
+import { readPublishedMotionSpecs } from "@/lib/motion/published-store";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -36,19 +38,22 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const motion = await readPublishedMotionSpecs();
+
   return (
     <ClerkProvider>
       <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
         <body className="min-h-full flex flex-col bg-background">
+          <AppLoadPrehideStyles appLoad={motion.appLoad} />
           <CartProvider>
             <MotionEditorShell>
               <MotionRuntimeStyles />
-              <AppLoadHost>{children}</AppLoadHost>
+              <AppLoadHost initialAppLoad={motion.appLoad}>{children}</AppLoadHost>
             </MotionEditorShell>
             <Toaster position="top-center" richColors />
           </CartProvider>

@@ -192,9 +192,26 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-gentle-pulse,
   .animate-gentle-pulse-emerald,
-  .animate-gentle-pulse-sky {
+  .animate-gentle-pulse-sky,
+  .animate-nav-shelf-handle-pulse {
     animation: none;
   }
+}
+
+@keyframes nav-shelf-handle-pulse {
+  0%,
+  100% {
+    background-color: rgb(167 139 250 / 0.35);
+    box-shadow: 0 0 0 0 rgb(139 92 246 / 0);
+  }
+  50% {
+    background-color: rgb(139 92 246 / 0.9);
+    box-shadow: 0 0 12px 3px rgb(167 139 250 / 0.55);
+  }
+}
+
+.animate-nav-shelf-handle-pulse {
+  animation: nav-shelf-handle-pulse 1.75s ease-in-out infinite;
 }
 
 .motion-editor-highlight {

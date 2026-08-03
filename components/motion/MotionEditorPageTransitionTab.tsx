@@ -52,8 +52,8 @@ export function MotionEditorPageTransitionTab({
 
         <TabsContent value="menu" className="mt-4 space-y-6">
           <p className="text-xs text-muted-foreground">
-            Animates the hamburger site menu sheet when it opens and closes. Tap the floating menu
-            button on the right, or use Play below to preview.
+            Animates the bottom nav menu shelf when it opens and closes. Drag the handle above the
+            nav bar, or use Play below to preview.
           </p>
 
           <div className="space-y-3">

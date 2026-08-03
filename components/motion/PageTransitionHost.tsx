@@ -39,12 +39,27 @@ function PageTransitionFrame({
   );
 }
 
-export function PageTransitionHost({ children }: { children: ReactNode }) {
+export function PageTransitionHost({
+  children,
+  initialPageTransition,
+}: {
+  children: ReactNode;
+  initialPageTransition?: PageTransitionSpec;
+}) {
   const pathname = usePathname();
   const editor = useOptionalMotionEditor();
-  const [spec, setSpec] = useState<PageTransitionSpec>(DEFAULT_PAGE_TRANSITION);
+  const isFirstMount = useRef(true);
+  const [spec, setSpec] = useState<PageTransitionSpec>(
+    initialPageTransition ?? DEFAULT_PAGE_TRANSITION
+  );
   const [previewToken, setPreviewToken] = useState(0);
   const loopIntervalRef = useRef<number | null>(null);
+
+  const skipTransition = isFirstMount.current && previewToken === 0;
+
+  useEffect(() => {
+    isFirstMount.current = false;
+  }, []);
 
   useEffect(() => {
     if (editor?.enabled) {
@@ -65,7 +80,7 @@ export function PageTransitionHost({ children }: { children: ReactNode }) {
         }
       } catch {
         if (!cancelled && !editor?.enabled) {
-          setSpec(DEFAULT_PAGE_TRANSITION);
+          setSpec(initialPageTransition ?? DEFAULT_PAGE_TRANSITION);
         }
       }
     }
@@ -89,7 +104,7 @@ export function PageTransitionHost({ children }: { children: ReactNode }) {
       window.removeEventListener("motion-specs-published", onPublished);
       window.removeEventListener(MOTION_DRAFT_CHANGED_EVENT, onDraftChanged);
     };
-  }, [editor?.enabled]);
+  }, [editor?.enabled, initialPageTransition]);
 
   useEffect(() => {
     function clearLoop() {
@@ -126,6 +141,10 @@ export function PageTransitionHost({ children }: { children: ReactNode }) {
       window.removeEventListener(MOTION_PREVIEW_STOP_EVENT, onStop);
     };
   }, [spec.durationMs]);
+
+  if (skipTransition) {
+    return <>{children}</>;
+  }
 
   const frameKey = `${pathname}-${previewToken}`;
 
