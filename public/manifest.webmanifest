@@ -1,0 +1,18 @@
+{
+  "name": "Dinnerz Done",
+  "short_name": "Dinnerz Done",
+  "description": "Order tomorrow's dinner tonight",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffbf7",
+  "theme_color": "#c2410c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
