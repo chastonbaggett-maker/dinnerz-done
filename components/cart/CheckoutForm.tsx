@@ -189,14 +189,6 @@ export function CheckoutForm({ settings, denySaveDetails, onDenySaveDetailsChang
     <form onSubmit={handleSubmit} className="space-y-6">
       <CartOrderSummary settings={settings} premiumFeeCents={premiumFee} />
 
-      <div className="rounded-xl border bg-muted/30 p-4">
-        <p className="font-medium">Delivery to your door</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Fixed {formatCents(settings.driver_delivery_fee_cents)} delivery fee on every order. Tips are
-          welcome and go directly to your driver.
-        </p>
-      </div>
-
       <DeliverySlotPicker
         serviceDate={serviceDate}
         premiumFeeCents={settings.premium_delivery_fee_cents}

@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MenuItemImage } from "@/components/menu/MenuItemImage";
 import { itemComesWithBread, itemComesWithSalad } from "@/lib/menu-meal-badges";
+import { cn } from "@/lib/utils";
 
 interface MenuCardProps {
   item: DailyMenuItem;
@@ -69,7 +70,11 @@ export function MenuCard({ item, orderingOpen, onCustomize }: MenuCardProps) {
               <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{menuItem.description}</p>
             )}
             <Button
-              className="mt-3 h-14 w-full rounded-xl text-base"
+              className={cn(
+                "mt-3 h-14 w-full rounded-xl text-base",
+                !orderingOpen &&
+                  "disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
+              )}
               disabled={!orderingOpen || item.sold_out}
               onClick={() => onCustomize(item)}
             >

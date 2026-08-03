@@ -1,4 +1,3 @@
-import { format, parseISO } from "date-fns";
 import type { DeliveryTimeSlot } from "@/lib/types";
 
 export function formatTimeSlot(slot: DeliveryTimeSlot) {
@@ -69,14 +68,9 @@ export function slotHasCapacity(slot: DeliveryTimeSlot) {
   return slot.order_count < slot.max_orders;
 }
 
-export function formatOrderNumber(orderNumber: number | null, serviceDate?: string) {
+export function formatOrderNumber(orderNumber: number | null, _serviceDate?: string) {
   if (!orderNumber) return "—";
-  if (serviceDate) {
-    const d = parseISO(serviceDate);
-    const prefix = format(d, "MMdd");
-    return `#${prefix}-${orderNumber.toString().padStart(3, "0")}`;
-  }
-  return `#${orderNumber}`;
+  return orderNumber.toString().padStart(3, "0");
 }
 
 export function generateDefaultSlots(

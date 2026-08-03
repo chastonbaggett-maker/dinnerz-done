@@ -7,7 +7,7 @@ const mutedRed =
 
 const toneClassName: Record<OrderWindowBadgeTone, string> = {
   active:
-    "border-transparent bg-emerald-600 text-white shadow-[0_0_20px_rgba(5,150,105,0.55)] [a]:hover:bg-emerald-600/90",
+    "animate-gentle-pulse-emerald border-transparent bg-emerald-600 text-white [a]:hover:bg-emerald-600/90",
   upcoming: mutedRed,
   closed: mutedRed,
 };

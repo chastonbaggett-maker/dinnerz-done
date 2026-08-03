@@ -29,6 +29,14 @@ export function getTomorrowDateString(timezone = DEFAULT_TIMEZONE) {
   return format(tomorrow, "yyyy-MM-dd");
 }
 
+export function getTodayDateString(timezone = DEFAULT_TIMEZONE) {
+  return formatInTimeZone(getNow(timezone), timezone, "yyyy-MM-dd");
+}
+
+export function isServiceDay(serviceDate: string, timezone = DEFAULT_TIMEZONE) {
+  return getTodayDateString(timezone) === serviceDate;
+}
+
 /** Tue–Fri menu dates: starts tomorrow, skipping Monday if needed. */
 export function getWeekdayMenuDates(count: number, timezone = DEFAULT_TIMEZONE) {
   let start = parseISO(getTomorrowDateString(timezone));
@@ -151,6 +159,12 @@ export function getOrderWindowBadgeState(
 /** @deprecated Use getOrderWindowBadgeState */
 export function formatOrderWindowBadge(cutoffAt: string, orderingOpen: boolean, timezone = DEFAULT_TIMEZONE) {
   return getOrderWindowBadgeState(cutoffAt, orderingOpen, timezone).label;
+}
+
+/** e.g. "Order by 8:00PM" */
+export function formatOrderByDeadline(cutoffAt: string, timezone = DEFAULT_TIMEZONE) {
+  const time = formatInTimeZone(parseISO(cutoffAt), timezone, "h:mm a").replace(" ", "");
+  return `Order by ${time}`;
 }
 
 export function formatCents(cents: number) {

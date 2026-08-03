@@ -128,3 +128,71 @@
     @apply font-sans;
   }
 }
+
+@keyframes gentle-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 4px 16px rgb(109 40 217 / 0.35),
+      0 0 0 0 rgb(167 139 250 / 0);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow:
+      0 14px 40px rgb(109 40 217 / 0.55),
+      0 0 0 14px rgb(167 139 250 / 0.22);
+  }
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 1.75s ease-in-out infinite;
+}
+
+@keyframes gentle-pulse-emerald {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 4px 16px rgb(5 150 105 / 0.35),
+      0 0 0 0 rgb(52 211 153 / 0);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow:
+      0 14px 40px rgb(5 150 105 / 0.55),
+      0 0 0 14px rgb(52 211 153 / 0.22);
+  }
+}
+
+.animate-gentle-pulse-emerald {
+  animation: gentle-pulse-emerald 1.75s ease-in-out infinite;
+}
+
+@keyframes gentle-pulse-sky {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 4px 16px rgb(2 132 199 / 0.3),
+      0 0 0 0 rgb(56 189 248 / 0);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow:
+      0 14px 40px rgb(2 132 199 / 0.45),
+      0 0 0 14px rgb(56 189 248 / 0.2);
+  }
+}
+
+.animate-gentle-pulse-sky {
+  animation: gentle-pulse-sky 1.75s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-gentle-pulse,
+  .animate-gentle-pulse-emerald,
+  .animate-gentle-pulse-sky {
+    animation: none;
+  }
+}

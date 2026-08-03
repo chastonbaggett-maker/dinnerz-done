@@ -18,6 +18,12 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  countFrozenLines,
+  FREEZEY_BULK_MIN_QUANTITY,
+  FREEZEY_BULK_DISCOUNT_PERCENT,
+  isFreezeyBulkDiscountActive,
+} from "@/lib/orders/pricing";
 
 export const FREEZEY_UPSELL_SHOWN_KEY = "dinnerz-freezey-upsell-shown";
 
@@ -34,9 +40,19 @@ export function FreezeyLunchUpsellDialog({
   items,
   loading = false,
 }: FreezeyLunchUpsellDialogProps) {
-  const { addLine } = useCart();
+  const { addLine, lines } = useCart();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const badgeBaseClass = "border-transparent px-2.5 py-1 text-sm";
+
+  const freezeyCount = countFrozenLines(lines);
+  const freezeyBulkActive = isFreezeyBulkDiscountActive(lines);
+  const freezeyRemaining = Math.max(0, FREEZEY_BULK_MIN_QUANTITY - freezeyCount);
+
+  function getCartQuantity(menuItemId: string) {
+    return lines
+      .filter((line) => line.lineType === "frozen_addon" && line.menuItemId === menuItemId)
+      .reduce((sum, line) => sum + line.quantity, 0);
+  }
 
   useEffect(() => {
     if (open) setQuantities({});
@@ -103,9 +119,21 @@ export function FreezeyLunchUpsellDialog({
             </div>
           </div>
           <DialogDescription className="text-base">
-            Freezer-ready meals ride along with your dinner delivery — {formatCents(799)} each. Perfect for
-            easy lunches all week.
+            Freezer-ready meals ride along with your dinner delivery — {formatCents(799)} each. Buy{" "}
+            {FREEZEY_BULK_MIN_QUANTITY} or more and save {FREEZEY_BULK_DISCOUNT_PERCENT}%.
           </DialogDescription>
+          {freezeyCount > 0 && (
+            <p
+              className={cn(
+                "text-sm font-medium",
+                freezeyBulkActive ? "text-sky-700 dark:text-sky-300" : "text-muted-foreground"
+              )}
+            >
+              {freezeyBulkActive
+                ? `${FREEZEY_BULK_DISCOUNT_PERCENT}% off applied — ${freezeyCount} Freezey Lunches in cart.`
+                : `${freezeyCount} in cart — add ${freezeyRemaining} more for ${FREEZEY_BULK_DISCOUNT_PERCENT}% off.`}
+            </p>
+          )}
         </DialogHeader>
 
         <div className="space-y-3">
@@ -122,8 +150,17 @@ export function FreezeyLunchUpsellDialog({
               ))}
             </div>
           ) : (
-            items.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
+            items.map((item) => {
+              const cartQuantity = getCartQuantity(item.id);
+
+              return (
+              <div
+                key={item.id}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border bg-card p-3",
+                  cartQuantity > 0 && "border-primary/20 bg-primary/[0.03]"
+                )}
+              >
                 <MenuItemImage
                   itemId={item.id}
                   itemName={item.name}
@@ -133,6 +170,12 @@ export function FreezeyLunchUpsellDialog({
                 <div className="min-w-0 flex-1">
                   <p className="font-medium leading-snug">{item.name}</p>
                   <p className="text-sm font-semibold">{formatCents(item.base_price_cents)}</p>
+                  {cartQuantity > 0 && (
+                    <p className="mt-1 text-xs font-medium text-primary/70">
+                      Currently in cart
+                      {cartQuantity > 1 ? ` · ${cartQuantity}` : ""}
+                    </p>
+                  )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <div className="flex items-center overflow-hidden rounded-lg border">
@@ -165,7 +208,8 @@ export function FreezeyLunchUpsellDialog({
                   </Button>
                 </div>
               </div>
-            ))
+            );
+            })
           )}
         </div>
 

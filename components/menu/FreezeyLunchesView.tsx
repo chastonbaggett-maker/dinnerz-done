@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import type { DailyMenu, MenuItem } from "@/lib/types";
-import { canOrderFromMenu } from "@/lib/orders/cutoff";
+import { canPlaceOrderToday } from "@/lib/orders/cutoff";
 import { useCart } from "@/components/cart/CartProvider";
 import { CutoffBanner } from "@/components/menu/CutoffBanner";
 import { FreezeyLunchesSection } from "@/components/menu/FreezeyLunchesSection";
@@ -19,7 +19,7 @@ interface FreezeyLunchesViewProps {
 export function FreezeyLunchesView({ menu, items, timezone }: FreezeyLunchesViewProps) {
   const { setMenuContext } = useCart();
 
-  const orderingOpen = menu ? canOrderFromMenu(menu, timezone) : false;
+  const orderingOpen = menu ? canPlaceOrderToday(menu, timezone) : false;
 
   useEffect(() => {
     if (menu) setMenuContext(menu.id, menu.service_date);
@@ -40,7 +40,12 @@ export function FreezeyLunchesView({ menu, items, timezone }: FreezeyLunchesView
         </div>
 
         {menu ? (
-          <CutoffBanner menu={menu} timezone={timezone} />
+          <CutoffBanner
+            menu={menu}
+            timezone={timezone}
+            heading="Always delivered tomorrow"
+            subheading="Add to your dinner order"
+          />
         ) : (
           <p className="rounded-2xl border border-dashed p-6 text-center text-muted-foreground">
             Ordering is not open right now. Check back when the next menu is published.

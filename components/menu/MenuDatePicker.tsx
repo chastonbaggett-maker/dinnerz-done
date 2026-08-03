@@ -3,14 +3,16 @@
 import Link from "next/link";
 import type { DailyMenu } from "@/lib/types";
 import { formatMenuDayLabel, formatMenuDayShort } from "@/lib/dates";
+import { canPlaceOrderToday } from "@/lib/orders/cutoff";
 import { cn } from "@/lib/utils";
 
 interface MenuDatePickerProps {
   menus: DailyMenu[];
   currentDate: string;
+  timezone: string;
 }
 
-export function MenuDatePicker({ menus, currentDate }: MenuDatePickerProps) {
+export function MenuDatePicker({ menus, currentDate, timezone }: MenuDatePickerProps) {
   if (menus.length <= 1) return null;
 
   return (
@@ -20,6 +22,7 @@ export function MenuDatePicker({ menus, currentDate }: MenuDatePickerProps) {
         <div className="flex w-max gap-2">
           {menus.map((menu) => {
             const isActive = menu.service_date === currentDate;
+            const orderable = canPlaceOrderToday(menu, timezone);
 
             return (
               <Link
@@ -27,20 +30,41 @@ export function MenuDatePicker({ menus, currentDate }: MenuDatePickerProps) {
                 href={`/menu/${menu.service_date}`}
                 className={cn(
                   "flex min-w-[4.5rem] shrink-0 flex-col items-center rounded-xl border-2 px-3 py-2 text-center transition-[colors,box-shadow]",
-                  isActive
-                    ? "border-primary bg-primary text-primary-foreground shadow-[0_4px_14px_-4px_color-mix(in_oklch,var(--primary)_55%,transparent),0_0_22px_-8px_color-mix(in_oklch,var(--primary)_35%,transparent)]"
-                    : "border-primary/45 bg-card hover:border-primary hover:bg-primary/5"
+                  orderable
+                    ? isActive
+                      ? "border-emerald-600 bg-emerald-600 text-white shadow-lg shadow-emerald-600/25"
+                      : "border-emerald-300 bg-emerald-50/80 text-emerald-800 hover:border-emerald-500 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200"
+                    : isActive
+                      ? "border-primary bg-primary text-primary-foreground shadow-[0_4px_14px_-4px_color-mix(in_oklch,var(--primary)_55%,transparent),0_0_22px_-8px_color-mix(in_oklch,var(--primary)_35%,transparent)]"
+                      : "border-primary/45 bg-card hover:border-primary hover:bg-primary/5"
                 )}
               >
                 <span
                   className={cn(
                     "text-xs font-semibold uppercase tracking-wide",
-                    isActive ? "text-primary-foreground" : "text-primary"
+                    orderable
+                      ? isActive
+                        ? "text-white"
+                        : "text-emerald-700 dark:text-emerald-300"
+                      : isActive
+                        ? "text-primary-foreground"
+                        : "text-primary"
                   )}
                 >
                   {formatMenuDayLabel(menu.service_date)}
                 </span>
-                <span className={cn("text-sm", isActive ? "text-primary-foreground/90" : "text-primary/70")}>
+                <span
+                  className={cn(
+                    "text-sm",
+                    orderable
+                      ? isActive
+                        ? "text-white/90"
+                        : "text-emerald-600/80 dark:text-emerald-400/80"
+                      : isActive
+                        ? "text-primary-foreground/90"
+                        : "text-primary/70"
+                  )}
+                >
                   {formatMenuDayShort(menu.service_date)}
                 </span>
               </Link>

@@ -202,10 +202,10 @@ CREATE INDEX IF NOT EXISTS idx_orders_route ON orders(route_id, route_sequence);
 
 INSERT OR IGNORE INTO business_settings (id) VALUES (lower(hex(randomblob(16))));
 
-INSERT OR IGNORE INTO menu_items (id, name, description, base_price_cents, item_type, sort_order, active) VALUES
-  (lower(hex(randomblob(16))), 'Freezey Chili Lunch', 'Hearty beef chili packed in a freezer-ready container.', 799, 'frozen_addon', 101, 1),
-  (lower(hex(randomblob(16))), 'Freezey Chicken Soup', 'Homemade chicken vegetable soup, perfect for the freezer.', 799, 'frozen_addon', 102, 1),
-  (lower(hex(randomblob(16))), 'Freezey Pasta Bake', 'Baked ziti with marinara and cheese — freeze and reheat anytime.', 799, 'frozen_addon', 103, 1);
+INSERT OR IGNORE INTO menu_items (id, name, description, base_price_cents, image_url, item_type, sort_order, active) VALUES
+  ('f1000000-0000-4000-8000-000000000001', 'Freezey Chili Lunch', 'Hearty beef chili packed in a freezer-ready container.', 799, 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=400&h=400&fit=crop&q=80', 'frozen_addon', 101, 1),
+  ('f1000000-0000-4000-8000-000000000002', 'Freezey Chicken Soup', 'Homemade chicken vegetable soup, perfect for the freezer.', 799, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=400&fit=crop&q=80', 'frozen_addon', 102, 1),
+  ('f1000000-0000-4000-8000-000000000003', 'Freezey Pasta Bake', 'Baked ziti with marinara and cheese — freeze and reheat anytime.', 799, 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=400&fit=crop&q=80', 'frozen_addon', 103, 1);
 
 INSERT OR IGNORE INTO drivers (id, name, phone, active) VALUES
   (lower(hex(randomblob(16))), 'Driver 1', NULL, 1),

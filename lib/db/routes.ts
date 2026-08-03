@@ -349,6 +349,16 @@ export async function getDriverRouteSummary(routeId: string): Promise<DriverRout
   };
 }
 
+/** True when the route is in progress and this order is the driver's next stop. */
+export async function isOrderNextInRoute(orderId: string, routeId: string | null | undefined) {
+  if (!routeId) return false;
+
+  const summary = await getDriverRouteSummary(routeId);
+  if (!summary || summary.route.status !== "in_progress") return false;
+
+  return summary.nextStop?.order_id === orderId;
+}
+
 export async function completeRouteStop(stopId: string) {
   if (!isSupabaseConfigured()) {
     const stop = demoStops.find((s) => s.id === stopId);

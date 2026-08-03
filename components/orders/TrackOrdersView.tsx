@@ -63,6 +63,9 @@ export function TrackOrdersView({ orders }: TrackOrdersViewProps) {
                     <OrderProgressTracker
                       status={order.order_status}
                       fulfillmentType={order.fulfillment_type}
+                      serviceDate={order.daily_menu?.service_date}
+                      createdAt={order.created_at}
+                      variant="compact"
                       className="mt-3"
                     />
                   </div>

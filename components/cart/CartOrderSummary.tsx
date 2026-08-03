@@ -2,7 +2,10 @@
 
 import { useCart } from "@/components/cart/CartProvider";
 import { formatCents } from "@/lib/dates";
-import { calculateOrderTotal } from "@/lib/orders/pricing";
+import {
+  calculateFreezeyBulkSavingsCents,
+  calculateOrderTotal,
+} from "@/lib/orders/pricing";
 import type { BusinessSettings } from "@/lib/types";
 
 interface CartOrderSummaryProps {
@@ -11,7 +14,8 @@ interface CartOrderSummaryProps {
 }
 
 export function CartOrderSummary({ settings, premiumFeeCents = 0 }: CartOrderSummaryProps) {
-  const { subtotalCents } = useCart();
+  const { lines, subtotalCents } = useCart();
+  const freezeySavingsCents = calculateFreezeyBulkSavingsCents(lines);
   const deliveryFee = settings.driver_delivery_fee_cents;
   const total = calculateOrderTotal(
     subtotalCents,
@@ -23,10 +27,27 @@ export function CartOrderSummary({ settings, premiumFeeCents = 0 }: CartOrderSum
 
   return (
     <div className="rounded-xl border p-4 text-sm">
-      <div className="flex justify-between py-1">
-        <span>Subtotal</span>
-        <span>{formatCents(subtotalCents)}</span>
-      </div>
+      {freezeySavingsCents > 0 ? (
+        <>
+          <div className="flex justify-between py-1">
+            <span>Subtotal before discount</span>
+            <span>{formatCents(subtotalCents + freezeySavingsCents)}</span>
+          </div>
+          <div className="flex justify-between py-1 text-sky-700 dark:text-sky-300">
+            <span>Freezey bulk discount (30% off 3+)</span>
+            <span>-{formatCents(freezeySavingsCents)}</span>
+          </div>
+          <div className="flex justify-between py-1 font-medium">
+            <span>Subtotal</span>
+            <span>{formatCents(subtotalCents)}</span>
+          </div>
+        </>
+      ) : (
+        <div className="flex justify-between py-1">
+          <span>Subtotal</span>
+          <span>{formatCents(subtotalCents)}</span>
+        </div>
+      )}
       <div className="flex justify-between py-1">
         <span>Delivery fee</span>
         <span>{formatCents(deliveryFee)}</span>

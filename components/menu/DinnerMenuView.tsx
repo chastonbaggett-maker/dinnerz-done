@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { DailyMenu, DailyMenuItem } from "@/lib/types";
 import { filterItemsByMenuVariant, type MenuVariant } from "@/lib/menu-dietary";
-import { canOrderFromMenu } from "@/lib/orders/cutoff";
+import { canPlaceOrderToday } from "@/lib/orders/cutoff";
 import { useCart } from "@/components/cart/CartProvider";
 import { CutoffBanner } from "@/components/menu/CutoffBanner";
 import { MenuDatePicker } from "@/components/menu/MenuDatePicker";
@@ -27,7 +27,7 @@ export function DinnerMenuView({ menu, items, upcomingMenus, timezone, businessN
   const [sheetOpen, setSheetOpen] = useState(false);
   const [menuVariant, setMenuVariant] = useState<MenuVariant>("standard");
 
-  const orderingOpen = canOrderFromMenu(menu, timezone);
+  const orderingOpen = canPlaceOrderToday(menu, timezone);
   const visibleItems = filterItemsByMenuVariant(items, menuVariant);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export function DinnerMenuView({ menu, items, upcomingMenus, timezone, businessN
           </p>
         </div>
 
-        <MenuDatePicker menus={upcomingMenus} currentDate={menu.service_date} />
+        <MenuDatePicker menus={upcomingMenus} currentDate={menu.service_date} timezone={timezone} />
 
         <CutoffBanner menu={menu} timezone={timezone} />
 

@@ -9,7 +9,13 @@ import { FreezeyLunchUpsellDialog, FREEZEY_UPSELL_SHOWN_KEY } from "@/components
 import { useCart } from "@/components/cart/CartProvider";
 import type { BusinessSettings, DailyMenuItem, MenuItem } from "@/lib/types";
 import { formatCents } from "@/lib/dates";
-import { summarizeCustomizations } from "@/lib/orders/pricing";
+import {
+  calculateLineTotal,
+  countFrozenLines,
+  FREEZEY_BULK_MIN_QUANTITY,
+  isFreezeyBulkDiscountActive,
+  summarizeCustomizations,
+} from "@/lib/orders/pricing";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -17,6 +23,9 @@ import { cn } from "@/lib/utils";
 export default function CartPage() {
   const pathname = usePathname();
   const { lines, removeLine, itemCount, hydrated, subtotalCents } = useCart();
+  const freezeyCount = countFrozenLines(lines);
+  const freezeyBulkActive = isFreezeyBulkDiscountActive(lines);
+  const freezeyRemaining = Math.max(0, FREEZEY_BULK_MIN_QUANTITY - freezeyCount);
   const [settings, setSettings] = useState<BusinessSettings | null>(null);
   const [editItem, setEditItem] = useState<DailyMenuItem | null>(null);
   const [editLineId, setEditLineId] = useState<string | undefined>();
@@ -122,8 +131,29 @@ export default function CartPage() {
     <div className="mx-auto w-full max-w-lg px-4 py-6 pb-36">
       <h1 className="mb-6 text-2xl font-semibold">Your cart</h1>
 
+      {freezeyCount > 0 && (
+        <div
+          className={cn(
+            "mb-4 rounded-xl border px-4 py-3 text-sm",
+            freezeyBulkActive
+              ? "border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-100"
+              : "border-muted bg-muted/30 text-muted-foreground"
+          )}
+        >
+          {freezeyBulkActive
+            ? "30% off applied — you have 3 or more Freezey Lunches in your cart."
+            : `Add ${freezeyRemaining} more Freezey Lunch${freezeyRemaining === 1 ? "" : "es"} for 30% off all Freezey items.`}
+        </div>
+      )}
+
       <div className="mb-6 space-y-3">
-        {lines.map((line) => (
+        {lines.map((line) => {
+          const undiscountedTotal = calculateLineTotal(line);
+          const lineTotal = calculateLineTotal(line, { cartLines: lines });
+          const showFreezeyDiscount =
+            line.lineType === "frozen_addon" && freezeyBulkActive && lineTotal < undiscountedTotal;
+
+          return (
           <div key={line.id} className="rounded-xl border p-4">
             <div className="flex justify-between gap-3">
               <div>
@@ -150,6 +180,11 @@ export default function CartPage() {
                       Fresh Dinner
                     </Badge>
                   )}
+                  {showFreezeyDiscount && (
+                    <Badge className="border-transparent bg-sky-600 px-2 py-0.5 text-xs text-white">
+                      30% off
+                    </Badge>
+                  )}
                 </div>
                 {line.customizations.length > 0 && (
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -157,13 +192,21 @@ export default function CartPage() {
                   </p>
                 )}
               </div>
-              <p className="font-medium">{formatCents(line.unitPriceCents * line.quantity)}</p>
+              <div className="text-right">
+                {showFreezeyDiscount && (
+                  <p className="text-sm text-muted-foreground line-through">
+                    {formatCents(undiscountedTotal)}
+                  </p>
+                )}
+                <p className="font-medium">{formatCents(lineTotal)}</p>
+              </div>
             </div>
             <Button variant="ghost" size="sm" className="mt-2 px-0" onClick={() => removeLine(line.id)}>
               Remove
             </Button>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {settings && (

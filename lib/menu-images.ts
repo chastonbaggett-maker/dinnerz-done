@@ -32,6 +32,20 @@ export const MENU_ITEM_IMAGES: Record<string, string> = {
     "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=400&fit=crop&q=80",
 };
 
-export function getMenuItemImageUrl(itemId: string, imageUrl: string | null | undefined) {
-  return imageUrl || MENU_ITEM_IMAGES[itemId] || null;
+/** Fallback when DB rows use random ids without image_url (e.g. migration seed). */
+export const MENU_ITEM_IMAGES_BY_NAME: Record<string, string> = {
+  "Freezey Chili Lunch": MENU_ITEM_IMAGES["f1000000-0000-4000-8000-000000000001"],
+  "Freezey Chicken Soup": MENU_ITEM_IMAGES["f1000000-0000-4000-8000-000000000002"],
+  "Freezey Pasta Bake": MENU_ITEM_IMAGES["f1000000-0000-4000-8000-000000000003"],
+};
+
+export function getMenuItemImageUrl(
+  itemId: string,
+  imageUrl: string | null | undefined,
+  itemName?: string
+) {
+  if (imageUrl) return imageUrl;
+  if (MENU_ITEM_IMAGES[itemId]) return MENU_ITEM_IMAGES[itemId];
+  if (itemName && MENU_ITEM_IMAGES_BY_NAME[itemName]) return MENU_ITEM_IMAGES_BY_NAME[itemName];
+  return null;
 }

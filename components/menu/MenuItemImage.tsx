@@ -17,7 +17,7 @@ export function MenuItemImage({
   className,
   size = "sm",
 }: MenuItemImageProps) {
-  const src = getMenuItemImageUrl(itemId, imageUrl);
+  const src = getMenuItemImageUrl(itemId, imageUrl, itemName);
   const dimensions = size === "sm" ? "size-20" : "size-14";
 
   if (!src) {

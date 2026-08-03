@@ -9,7 +9,6 @@ export default async function HomePage() {
 
   return (
     <HomeView
-      businessName={settings.business_name}
       menu={menuData?.menu ?? null}
       timezone={settings.timezone}
       frozenEnabled={settings.frozen_lunch_enabled}

@@ -398,8 +398,44 @@ function getDemoDailyMenu(): DailyMenu {
   return getDemoDailyMenuForDate(getDemoWeekDates()[0])!;
 }
 
-const demoOrders: Order[] = [];
-const demoOrderNumbers: Record<string, number> = {};
+function getDemoPublishedMenuForDate(serviceDate: string) {
+  const menu = getDemoDailyMenuForDate(serviceDate);
+  if (!menu) return null;
+  return { menu, items: getDemoDailyMenuItems(menu) };
+}
+
+function getDemoNextAvailableMenuFrom(tomorrow: string) {
+  for (const date of getDemoWeekDates()) {
+    if (date >= tomorrow) {
+      const result = getDemoPublishedMenuForDate(date);
+      if (result) return result;
+    }
+  }
+  return null;
+}
+
+function filterDemoMenuItems(includeInactive: boolean, itemType?: "meal" | "frozen_addon") {
+  let items = includeInactive ? DEMO_MENU_ITEMS : DEMO_MENU_ITEMS.filter((i) => i.active);
+  if (itemType) items = items.filter((i) => i.item_type === itemType);
+  return items;
+}
+
+function isDemoDailyMenuId(id: string) {
+  return id.startsWith("demo-menu-");
+}
+
+function findDemoOrder(id: string) {
+  return demoOrders.find((o) => o.id === id) ?? null;
+}
+
+const globalForDemo = globalThis as typeof globalThis & {
+  __dinnerzDemoOrders?: Order[];
+  __dinnerzDemoOrderNumbers?: Record<string, number>;
+};
+
+const demoOrders = globalForDemo.__dinnerzDemoOrders ?? (globalForDemo.__dinnerzDemoOrders = []);
+const demoOrderNumbers =
+  globalForDemo.__dinnerzDemoOrderNumbers ?? (globalForDemo.__dinnerzDemoOrderNumbers = {});
 
 function mapMenuItem(row: typeof menuItems.$inferSelect): MenuItem {
   return row as MenuItem;
@@ -645,9 +681,7 @@ export async function updateBusinessSettings(updates: Partial<BusinessSettings>)
 
 export async function getMenuItems(includeInactive = false, itemType?: "meal" | "frozen_addon"): Promise<MenuItem[]> {
   if (!isSupabaseConfigured()) {
-    let items = includeInactive ? DEMO_MENU_ITEMS : DEMO_MENU_ITEMS.filter((i) => i.active);
-    if (itemType) items = items.filter((i) => i.item_type === itemType);
-    return items;
+    return filterDemoMenuItems(includeInactive, itemType);
   }
 
   const db = getDb();
@@ -660,6 +694,10 @@ export async function getMenuItems(includeInactive = false, itemType?: "meal" | 
     .from(menuItems)
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(asc(menuItems.sort_order));
+
+  if (rows.length === 0) {
+    return filterDemoMenuItems(includeInactive, itemType);
+  }
 
   return rows as MenuItem[];
 }
@@ -680,7 +718,14 @@ export async function getMenuItemWithCustomizations(id: string) {
 
   const db = getDb();
   const [item] = await db.select().from(menuItems).where(eq(menuItems.id, id)).limit(1);
-  if (!item) return null;
+  if (!item) {
+    const demoItem = DEMO_MENU_ITEMS.find((i) => i.id === id);
+    if (!demoItem) return null;
+    return {
+      ...demoItem,
+      customization_groups: [] as CustomizationGroup[],
+    };
+  }
 
   const groups = await loadCustomizationGroupsForMenuItem(id);
   return {
@@ -774,9 +819,7 @@ export async function saveCustomizationGroups(
 
 export async function getPublishedMenuForDate(serviceDate: string) {
   if (!isSupabaseConfigured()) {
-    const menu = getDemoDailyMenuForDate(serviceDate);
-    if (!menu) return null;
-    return { menu, items: getDemoDailyMenuItems(menu) };
+    return getDemoPublishedMenuForDate(serviceDate);
   }
 
   const db = getDb();
@@ -786,7 +829,9 @@ export async function getPublishedMenuForDate(serviceDate: string) {
     .where(and(eq(dailyMenus.service_date, serviceDate), eq(dailyMenus.status, "published")))
     .limit(1);
 
-  if (!menu) return null;
+  if (!menu) {
+    return getDemoPublishedMenuForDate(serviceDate);
+  }
 
   const items = await getDailyMenuItems(menu.id);
   return { menu: mapDailyMenu(menu), items };
@@ -799,13 +844,7 @@ export async function getNextAvailableMenu() {
   if (menu) return menu;
 
   if (!isSupabaseConfigured()) {
-    for (const date of getDemoWeekDates()) {
-      if (date >= tomorrow) {
-        const demoMenu = getDemoDailyMenuForDate(date);
-        if (demoMenu) return { menu: demoMenu, items: getDemoDailyMenuItems(demoMenu) };
-      }
-    }
-    return null;
+    return getDemoNextAvailableMenuFrom(tomorrow);
   }
 
   const db = getDb();
@@ -816,7 +855,9 @@ export async function getNextAvailableMenu() {
     .orderBy(asc(dailyMenus.service_date))
     .limit(1);
 
-  if (!data) return null;
+  if (!data) {
+    return getDemoNextAvailableMenuFrom(tomorrow);
+  }
 
   const items = await getDailyMenuItems(data.id);
   return { menu: mapDailyMenu(data), items };
@@ -836,6 +877,10 @@ export async function getUpcomingPublishedMenus(timezone = DEFAULT_TIMEZONE) {
     .where(and(eq(dailyMenus.status, "published"), gte(dailyMenus.service_date, tomorrow)))
     .orderBy(asc(dailyMenus.service_date));
 
+  if (rows.length === 0) {
+    return getAllDemoDailyMenus();
+  }
+
   return rows.map(mapDailyMenu);
 }
 
@@ -846,22 +891,36 @@ export async function getDailyMenus() {
 
   const db = getDb();
   const rows = await db.select().from(dailyMenus).orderBy(desc(dailyMenus.service_date));
+  if (rows.length === 0) {
+    return getAllDemoDailyMenus();
+  }
   return rows.map(mapDailyMenu);
 }
 
 export async function getDailyMenuByDate(serviceDate: string) {
   if (!isSupabaseConfigured()) {
-    const menu = getDemoDailyMenuForDate(serviceDate);
-    if (!menu) return null;
-    return { menu, items: getDemoDailyMenuItems(menu) };
+    return getDemoPublishedMenuForDate(serviceDate);
   }
 
   const db = getDb();
   const [menu] = await db.select().from(dailyMenus).where(eq(dailyMenus.service_date, serviceDate)).limit(1);
-  if (!menu) return null;
+  if (!menu) {
+    return getDemoPublishedMenuForDate(serviceDate);
+  }
 
   const items = await getDailyMenuItems(menu.id);
   return { menu: mapDailyMenu(menu), items };
+}
+
+export async function getDailyMenuById(dailyMenuId: string): Promise<DailyMenu | null> {
+  const demoMenu = getAllDemoDailyMenus().find((menu) => menu.id === dailyMenuId);
+  if (demoMenu) return demoMenu;
+
+  if (!isSupabaseConfigured()) return null;
+
+  const db = getDb();
+  const [menu] = await db.select().from(dailyMenus).where(eq(dailyMenus.id, dailyMenuId)).limit(1);
+  return menu ? mapDailyMenu(menu) : null;
 }
 
 export async function createOrUpdateDailyMenu(serviceDate: string, status: DailyMenu["status"] = "draft") {
@@ -1007,10 +1066,9 @@ export async function createOrder(payload: CheckoutPayload, clerkUserId?: string
   }
 
   let serviceDate = getTomorrowDateString(settings.timezone);
-  if (!isSupabaseConfigured()) {
-    const demoMenu = getAllDemoDailyMenus().find((menu) => menu.id === payload.dailyMenuId);
-    if (demoMenu) serviceDate = demoMenu.service_date;
-  } else {
+  const demoMenu = getAllDemoDailyMenus().find((menu) => menu.id === payload.dailyMenuId);
+  if (demoMenu) serviceDate = demoMenu.service_date;
+  else if (isSupabaseConfigured()) {
     const db = getDb();
     const [menu] = await db
       .select({ service_date: dailyMenus.service_date })
@@ -1022,7 +1080,7 @@ export async function createOrder(payload: CheckoutPayload, clerkUserId?: string
 
   const orderNumber = await assignOrderNumber(serviceDate);
 
-  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured() || isDemoDailyMenuId(payload.dailyMenuId)) {
     const order: Order = {
       id: crypto.randomUUID(),
       daily_menu_id: payload.dailyMenuId,
@@ -1048,6 +1106,7 @@ export async function createOrder(payload: CheckoutPayload, clerkUserId?: string
       route_sequence: null,
       driver_id: null,
       created_at: new Date().toISOString(),
+      daily_menu: demoMenu ?? undefined,
       order_lines: payload.lines.map((line) => ({
         id: crypto.randomUUID(),
         order_id: "",
@@ -1057,7 +1116,7 @@ export async function createOrder(payload: CheckoutPayload, clerkUserId?: string
         item_name: line.itemName,
         quantity: line.quantity,
         unit_price_cents: line.unitPriceCents,
-        line_total_cents: calculateLineTotal(line),
+        line_total_cents: calculateLineTotal(line, { cartLines: payload.lines }),
         order_line_customizations: line.customizations.flatMap((group) =>
           group.selections.map((sel) => ({
             id: crypto.randomUUID(),
@@ -1117,7 +1176,7 @@ export async function createOrder(payload: CheckoutPayload, clerkUserId?: string
         item_name: line.itemName,
         quantity: line.quantity,
         unit_price_cents: line.unitPriceCents,
-        line_total_cents: calculateLineTotal(line),
+        line_total_cents: calculateLineTotal(line, { cartLines: payload.lines }),
         created_at: now,
       });
 
@@ -1145,9 +1204,16 @@ export async function createOrder(payload: CheckoutPayload, clerkUserId?: string
 }
 
 export async function getOrder(id: string) {
-  if (!isSupabaseConfigured()) {
-    return demoOrders.find((o) => o.id === id) ?? null;
+  const demo = findDemoOrder(id);
+  if (demo) {
+    if (!demo.daily_menu) {
+      const menu = getAllDemoDailyMenus().find((m) => m.id === demo.daily_menu_id);
+      if (menu) return { ...demo, daily_menu: menu };
+    }
+    return demo;
   }
+
+  if (!isSupabaseConfigured()) return null;
 
   const db = getDb();
   const [row] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
@@ -1182,8 +1248,10 @@ export async function getOrders(filters?: { date?: string; status?: string }) {
 }
 
 export async function getOrdersForUser(clerkUserId: string) {
+  const demo = demoOrders.filter((o) => o.clerk_user_id === clerkUserId);
+
   if (!isSupabaseConfigured()) {
-    return demoOrders.filter((o) => o.clerk_user_id === clerkUserId);
+    return demo;
   }
 
   const db = getDb();
@@ -1193,15 +1261,17 @@ export async function getOrdersForUser(clerkUserId: string) {
     .where(eq(orders.clerk_user_id, clerkUserId))
     .orderBy(desc(orders.created_at));
 
-  return hydrateOrders(rows);
+  return [...demo, ...(await hydrateOrders(rows))];
 }
 
 export async function updateOrderStatus(id: string, orderStatus: Order["order_status"]) {
-  if (!isSupabaseConfigured()) {
-    const order = demoOrders.find((o) => o.id === id);
-    if (order) order.order_status = orderStatus;
-    return order ?? null;
+  const demo = findDemoOrder(id);
+  if (demo) {
+    demo.order_status = orderStatus;
+    return demo;
   }
+
+  if (!isSupabaseConfigured()) return null;
 
   const db = getDb();
   const [row] = await db
@@ -1215,16 +1285,16 @@ export async function updateOrderStatus(id: string, orderStatus: Order["order_st
 }
 
 export async function markOrderPaid(id: string, stripeSessionId: string, paymentIntentId?: string) {
-  if (!isSupabaseConfigured()) {
-    const order = demoOrders.find((o) => o.id === id);
-    if (order) {
-      order.payment_status = "paid";
-      order.stripe_session_id = stripeSessionId;
-      const { sendOrderConfirmationEmail } = await import("@/lib/email");
-      await sendOrderConfirmationEmail(order);
-    }
-    return order ?? null;
+  const demo = findDemoOrder(id);
+  if (demo) {
+    demo.payment_status = "paid";
+    demo.stripe_session_id = stripeSessionId;
+    const { sendOrderConfirmationEmail } = await import("@/lib/email");
+    await sendOrderConfirmationEmail(demo);
+    return demo;
   }
+
+  if (!isSupabaseConfigured()) return null;
 
   const db = getDb();
   const [row] = await db
@@ -1248,6 +1318,12 @@ export async function markOrderPaid(id: string, stripeSessionId: string, payment
 }
 
 export async function updateOrderStripeSession(id: string, stripeSessionId: string) {
+  const demo = findDemoOrder(id);
+  if (demo) {
+    demo.stripe_session_id = stripeSessionId;
+    return;
+  }
+
   if (!isSupabaseConfigured()) return;
 
   const db = getDb();

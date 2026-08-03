@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
-import { createOrder, getBusinessSettings, updateOrderStripeSession, markOrderPaid, getNextAvailableMenu } from "@/lib/db/queries";
-import { getDb, isDatabaseConfigured } from "@/lib/db/client";
-import { dailyMenus } from "@/lib/db/schema";
+import {
+  createOrder,
+  getBusinessSettings,
+  updateOrderStripeSession,
+  markOrderPaid,
+  getDailyMenuById,
+} from "@/lib/db/queries";
+import { canPlaceOrderToday } from "@/lib/orders/cutoff";
+import { getStripe, isStripeConfigured } from "@/lib/stripe/client";
+import type { CartLine, CheckoutPayload } from "@/lib/types";
 
 const checkoutSchema = z.object({
   dailyMenuId: z.string(),
@@ -20,35 +26,18 @@ const checkoutSchema = z.object({
   lines: z.array(z.custom<CartLine>()).min(1),
 });
 
-import { canOrderFromMenu } from "@/lib/orders/cutoff";
-import { getStripe, isStripeConfigured } from "@/lib/stripe/client";
-import type { CartLine, CheckoutPayload, DailyMenu } from "@/lib/types";
-
-const isSupabaseConfigured = isDatabaseConfigured;
-
-async function getMenuById(dailyMenuId: string): Promise<DailyMenu | null> {
-  if (!isSupabaseConfigured()) {
-    const next = await getNextAvailableMenu();
-    return next?.menu.id === dailyMenuId ? next.menu : next?.menu ?? null;
-  }
-
-  const db = getDb();
-  const [menu] = await db.select().from(dailyMenus).where(eq(dailyMenus.id, dailyMenuId)).limit(1);
-  return (menu as DailyMenu) ?? null;
-}
-
 export async function POST(req: Request) {
   try {
     const body = checkoutSchema.parse(await req.json()) as CheckoutPayload;
     const settings = await getBusinessSettings();
     const { userId } = await auth();
 
-    const menu = await getMenuById(body.dailyMenuId);
+    const menu = await getDailyMenuById(body.dailyMenuId);
     if (!menu) {
       return NextResponse.json({ error: "Menu not found" }, { status: 404 });
     }
 
-    if (!canOrderFromMenu(menu, settings.timezone)) {
+    if (!canPlaceOrderToday(menu, settings.timezone)) {
       return NextResponse.json({ error: "Ordering is closed for this menu" }, { status: 400 });
     }
 
