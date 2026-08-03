@@ -2,6 +2,7 @@ import { readFile, writeFile, mkdir } from "fs/promises";
 import path from "path";
 import type { MotionSpecDocument } from "@/lib/motion/types";
 import { emptyMotionDocument } from "@/lib/motion/css";
+import { normalizeMotionDocument } from "@/lib/motion/document";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const SPECS_PATH = path.join(DATA_DIR, "motion-specs.json");
@@ -13,7 +14,7 @@ export async function readPublishedMotionSpecs(): Promise<MotionSpecDocument> {
 
   try {
     const raw = await readFile(SPECS_PATH, "utf8");
-    memoryPublished = JSON.parse(raw) as MotionSpecDocument;
+    memoryPublished = normalizeMotionDocument(JSON.parse(raw) as MotionSpecDocument);
     return memoryPublished;
   } catch {
     return emptyMotionDocument();
@@ -21,11 +22,10 @@ export async function readPublishedMotionSpecs(): Promise<MotionSpecDocument> {
 }
 
 export async function writePublishedMotionSpecs(doc: MotionSpecDocument) {
-  const payload: MotionSpecDocument = {
+  const payload = normalizeMotionDocument({
     ...doc,
-    version: 1,
     updatedAt: new Date().toISOString(),
-  };
+  });
 
   await mkdir(DATA_DIR, { recursive: true });
   await writeFile(SPECS_PATH, JSON.stringify(payload, null, 2), "utf8");

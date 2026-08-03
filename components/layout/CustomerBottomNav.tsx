@@ -25,7 +25,10 @@ export function CustomerBottomNav() {
   const deliveryInRoute = useDeliveryInRoute();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 overflow-hidden rounded-t-2xl border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <nav
+      data-app-load-region="bottom-nav"
+      className="fixed inset-x-0 bottom-0 z-30 overflow-hidden rounded-t-2xl border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+    >
       <div className="mx-auto flex h-[5.2rem] max-w-lg items-stretch px-2 pb-[env(safe-area-inset-bottom)]">
         {links.map(({ href, label, icon: Icon, ...link }) => {
           const active =

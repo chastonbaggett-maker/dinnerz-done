@@ -16,6 +16,9 @@ import {
   type MotionEffectSpec,
   type MotionSpecDocument,
   type MotionTarget,
+  type PageTransitionSpec,
+  type AppLoadSpec,
+  type SiteMenuTransitionSpec,
 } from "@/lib/motion/types";
 import {
   documentToStylesheet,
@@ -27,14 +30,20 @@ import {
   readMotionDraft,
   writeMotionDraft,
 } from "@/lib/motion/draft-storage";
+import { normalizeMotionDocument } from "@/lib/motion/document";
+import { normalizeMotionEffect } from "@/lib/motion/effects";
 import {
   ensureMotionTargetId,
   labelForElement,
   selectorForTargetId,
 } from "@/lib/motion/selector";
+import { MOTION_EDITOR_UNLOCK_EVENT } from "@/lib/motion/editor-gesture";
 
 interface MotionEditorContextValue {
   enabled: boolean;
+  panelOpen: boolean;
+  openPanel: () => void;
+  closePanel: () => void;
   pickMode: boolean;
   setPickMode: (value: boolean) => void;
   selectedTargets: MotionTarget[];
@@ -43,6 +52,12 @@ interface MotionEditorContextValue {
   effects: MotionEffectSpec;
   setEffects: (value: MotionEffectSpec) => void;
   draft: MotionSpecDocument;
+  pageTransition: PageTransitionSpec;
+  setPageTransition: (value: PageTransitionSpec) => void;
+  menuTransition: SiteMenuTransitionSpec;
+  setMenuTransition: (value: SiteMenuTransitionSpec) => void;
+  appLoad: AppLoadSpec;
+  setAppLoad: (value: AppLoadSpec) => void;
   publish: () => Promise<void>;
   publishing: boolean;
 }
@@ -65,16 +80,33 @@ export function MotionEditorProvider({
   enabled: boolean;
   children: ReactNode;
 }) {
+  const [panelOpen, setPanelOpen] = useState(false);
   const [pickMode, setPickMode] = useState(false);
   const [selectedTargets, setSelectedTargets] = useState<MotionTarget[]>([]);
-  const [effects, setEffects] = useState<MotionEffectSpec>(DEFAULT_MOTION_EFFECT);
+  const [effects, setEffects] = useState<MotionEffectSpec>(() =>
+    normalizeMotionEffect(DEFAULT_MOTION_EFFECT)
+  );
   const [draft, setDraft] = useState<MotionSpecDocument>(emptyMotionDocument());
   const [publishing, setPublishing] = useState(false);
   const hoveredRef = useRef<Element | null>(null);
 
+  const openPanel = useCallback(() => setPanelOpen(true), []);
+  const closePanel = useCallback(() => {
+    setPanelOpen(false);
+    setPickMode(false);
+  }, []);
+
+  useEffect(() => {
+    const onUnlock = () => {
+      openPanel();
+    };
+    window.addEventListener(MOTION_EDITOR_UNLOCK_EVENT, onUnlock);
+    return () => window.removeEventListener(MOTION_EDITOR_UNLOCK_EVENT, onUnlock);
+  }, [openPanel]);
+
   useEffect(() => {
     if (!enabled) return;
-    setDraft(readMotionDraft());
+    setDraft(normalizeMotionDocument(readMotionDraft()));
   }, [enabled]);
 
   const applyPreviewStyles = useCallback(
@@ -110,7 +142,7 @@ export function MotionEditorProvider({
         );
 
         const nextDoc: MotionSpecDocument = {
-          version: 1,
+          ...current,
           rules,
           updatedAt: new Date().toISOString(),
         };
@@ -199,9 +231,10 @@ export function MotionEditorProvider({
 
   const setEffectsAndPreview = useCallback(
     (next: MotionEffectSpec) => {
-      setEffects(next);
+      const normalized = normalizeMotionEffect(next);
+      setEffects(normalized);
       if (selectedTargets.length > 0) {
-        updateDraftFromSelection(selectedTargets, next);
+        updateDraftFromSelection(selectedTargets, normalized);
       }
     },
     [selectedTargets, updateDraftFromSelection]
@@ -226,10 +259,47 @@ export function MotionEditorProvider({
     [effects, updateDraftFromSelection]
   );
 
+  const setPageTransition = useCallback((pageTransition: PageTransitionSpec) => {
+    setDraft((current) => {
+      const nextDoc = normalizeMotionDocument({
+        ...current,
+        pageTransition,
+        updatedAt: new Date().toISOString(),
+      });
+      writeMotionDraft(nextDoc);
+      return nextDoc;
+    });
+  }, []);
+
+  const setMenuTransition = useCallback((menuTransition: SiteMenuTransitionSpec) => {
+    setDraft((current) => {
+      const nextDoc = normalizeMotionDocument({
+        ...current,
+        menuTransition,
+        updatedAt: new Date().toISOString(),
+      });
+      writeMotionDraft(nextDoc);
+      return nextDoc;
+    });
+  }, []);
+
+  const setAppLoad = useCallback((appLoad: AppLoadSpec) => {
+    setDraft((current) => {
+      const nextDoc = normalizeMotionDocument({
+        ...current,
+        appLoad,
+        updatedAt: new Date().toISOString(),
+      });
+      writeMotionDraft(nextDoc);
+      return nextDoc;
+    });
+  }, []);
+
   const publish = useCallback(async () => {
     setPublishing(true);
     try {
-      const res = await fetch("/api/admin/motion", {
+      await fetch("/api/motion/editor-unlock", { method: "POST" });
+      const res = await fetch("/api/motion/publish", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(draft),
@@ -253,6 +323,9 @@ export function MotionEditorProvider({
   const value = useMemo(
     () => ({
       enabled,
+      panelOpen,
+      openPanel,
+      closePanel,
       pickMode,
       setPickMode,
       selectedTargets,
@@ -261,11 +334,20 @@ export function MotionEditorProvider({
       effects,
       setEffects: setEffectsAndPreview,
       draft,
+      pageTransition: draft.pageTransition,
+      setPageTransition,
+      menuTransition: draft.menuTransition,
+      setMenuTransition,
+      appLoad: draft.appLoad,
+      setAppLoad,
       publish,
       publishing,
     }),
     [
       enabled,
+      panelOpen,
+      openPanel,
+      closePanel,
       pickMode,
       selectedTargets,
       clearSelection,
@@ -273,12 +355,13 @@ export function MotionEditorProvider({
       effects,
       setEffectsAndPreview,
       draft,
+      setPageTransition,
+      setMenuTransition,
+      setAppLoad,
       publish,
       publishing,
     ]
   );
-
-  if (!enabled) return <>{children}</>;
 
   return <MotionEditorContext.Provider value={value}>{children}</MotionEditorContext.Provider>;
 }

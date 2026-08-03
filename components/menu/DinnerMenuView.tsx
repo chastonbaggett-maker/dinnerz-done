@@ -11,6 +11,7 @@ import { MenuDayContent } from "@/components/menu/MenuDayContent";
 import { CutoffBanner } from "@/components/menu/CutoffBanner";
 import { CustomizationSheet } from "@/components/menu/CustomizationSheet";
 import { CartBar } from "@/components/cart/CartBar";
+import { PageIcon } from "@/components/layout/PageIcon";
 
 export interface MenuWithItems {
   menu: DailyMenu;
@@ -78,9 +79,15 @@ export function DinnerMenuView({
   return (
     <>
       <div className="mx-auto w-full max-w-lg space-y-6 px-4 pb-36 pt-6">
-        <p className="text-sm text-muted-foreground">
-          {businessName} · Dinners at your door
-        </p>
+        <div className="flex items-start gap-3">
+          <PageIcon variant="menu" />
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Menu</h1>
+            <p className="text-sm text-muted-foreground">
+              {businessName} · Dinners at your door
+            </p>
+          </div>
+        </div>
 
         {selectedEntry && (
           <section className="space-y-4">

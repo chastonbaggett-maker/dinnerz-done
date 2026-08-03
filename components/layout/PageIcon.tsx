@@ -14,7 +14,7 @@ const pageIconConfig: Record<
   },
   menu: {
     icon: UtensilsCrossed,
-    containerClass: "size-10 bg-primary/10 text-primary",
+    containerClass: "size-12 bg-primary/10 text-primary",
     iconClass: "size-6",
   },
   freezey: {

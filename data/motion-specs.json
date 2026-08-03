@@ -1,5 +1,215 @@
 {
   "version": 1,
-  "rules": [],
-  "updatedAt": "2026-08-03T00:00:00.000Z"
+  "rules": [
+    {
+      "targetIds": [
+        "mt-9hxyouef"
+      ],
+      "selector": "[data-motion-target=\"mt-9hxyouef\"]",
+      "label": "self.__next_r=\"NX08u5mWTvmPGNVzoSj9M\"(self",
+      "effects": {
+        "transitionProperty": "all",
+        "transitionDurationMs": 300,
+        "transitionTimingFunction": "ease-out",
+        "transitionDelayMs": 0,
+        "animationName": "none",
+        "animationDurationMs": 1750,
+        "animationTimingFunction": "ease-in-out",
+        "animationIterationCount": "infinite",
+        "animationDelayMs": 0,
+        "opacityFrom": 0,
+        "offsetPx": 14,
+        "scaleFrom": 97
+      }
+    },
+    {
+      "targetIds": [
+        "mt-vl4ptga4"
+      ],
+      "selector": "[data-motion-target=\"mt-vl4ptga4\"]",
+      "label": "Opacity",
+      "effects": {
+        "transitionProperty": "all",
+        "transitionDurationMs": 300,
+        "transitionTimingFunction": "ease-out",
+        "transitionDelayMs": 0,
+        "animationName": "none",
+        "animationDurationMs": 1750,
+        "animationTimingFunction": "ease-in-out",
+        "animationIterationCount": "infinite",
+        "animationDelayMs": 0,
+        "opacityFrom": 0,
+        "offsetPx": 14,
+        "scaleFrom": 97
+      }
+    },
+    {
+      "targetIds": [
+        "mt-ioclymu1"
+      ],
+      "selector": "[data-motion-target=\"mt-ioclymu1\"]",
+      "label": "svg.[object",
+      "effects": {
+        "transitionProperty": "all",
+        "transitionDurationMs": 300,
+        "transitionTimingFunction": "ease-out",
+        "transitionDelayMs": 0,
+        "animationName": "gentle-pulse-sky",
+        "animationDurationMs": 1750,
+        "animationTimingFunction": "ease-in-out",
+        "animationIterationCount": "infinite",
+        "animationDelayMs": 0,
+        "opacityFrom": 0,
+        "offsetPx": 14,
+        "scaleFrom": 97
+      }
+    },
+    {
+      "targetIds": [
+        "mt-pl6lzmuo"
+      ],
+      "selector": "[data-motion-target=\"mt-pl6lzmuo\"]",
+      "label": "div.flex",
+      "effects": {
+        "transitionProperty": "all",
+        "transitionDurationMs": 300,
+        "transitionTimingFunction": "ease-out",
+        "transitionDelayMs": 0,
+        "animationName": "gentle-pulse-sky",
+        "animationDurationMs": 1750,
+        "animationTimingFunction": "ease-in-out",
+        "animationIterationCount": "infinite",
+        "animationDelayMs": 0,
+        "opacityFrom": 0,
+        "offsetPx": 14,
+        "scaleFrom": 97
+      }
+    },
+    {
+      "targetIds": [
+        "mt-5j6efuej"
+      ],
+      "selector": "[data-motion-target=\"mt-5j6efuej\"]",
+      "label": "None",
+      "effects": {
+        "transitionProperty": "all",
+        "transitionDurationMs": 300,
+        "transitionTimingFunction": "ease-out",
+        "transitionDelayMs": 0,
+        "animationName": "gentle-pulse-sky",
+        "animationDurationMs": 1750,
+        "animationTimingFunction": "ease-in-out",
+        "animationIterationCount": "infinite",
+        "animationDelayMs": 0,
+        "opacityFrom": 0,
+        "offsetPx": 14,
+        "scaleFrom": 97
+      }
+    },
+    {
+      "targetIds": [
+        "mt-6lc3z9hn"
+      ],
+      "selector": "[data-motion-target=\"mt-6lc3z9hn\"]",
+      "label": "button.fixed",
+      "effects": {
+        "transitionProperty": "all",
+        "transitionDurationMs": 300,
+        "transitionTimingFunction": "ease-out",
+        "transitionDelayMs": 0,
+        "animationName": "gentle-pulse-sky",
+        "animationDurationMs": 1750,
+        "animationTimingFunction": "ease-in-out",
+        "animationIterationCount": "infinite",
+        "animationDelayMs": 0,
+        "opacityFrom": 0,
+        "offsetPx": 14,
+        "scaleFrom": 97
+      }
+    }
+  ],
+  "pageTransition": {
+    "type": "scale",
+    "durationMs": 1200,
+    "easing": "cubic-bezier(0.33, 1, 0.68, 1)",
+    "opacityFrom": 0,
+    "offsetPx": 120,
+    "scaleFrom": 93
+  },
+  "menuTransition": {
+    "enter": {
+      "type": "slide-up",
+      "durationMs": 620,
+      "easing": "ease-in-out",
+      "opacityFrom": 0,
+      "offsetPx": 120,
+      "scaleFrom": 97
+    },
+    "exit": {
+      "type": "slide-down",
+      "durationMs": 280,
+      "easing": "ease-in",
+      "opacityFrom": 0,
+      "offsetPx": 20,
+      "scaleFrom": 97
+    }
+  },
+  "appLoad": {
+    "mode": "elements",
+    "simple": {
+      "type": "fade",
+      "durationMs": 400,
+      "easing": "ease-out",
+      "opacityFrom": 0,
+      "offsetPx": 14,
+      "scaleFrom": 97
+    },
+    "elements": {
+      "regions": [
+        {
+          "id": "header",
+          "enabled": true,
+          "selector": "[data-app-load-region=\"header\"]",
+          "animationName": "motion-slide-down-in",
+          "durationMs": 1100,
+          "easing": "ease-out",
+          "opacityFrom": 0,
+          "offsetPx": 120,
+          "scaleFrom": 97,
+          "staggerMs": 0,
+          "baseDelayMs": 0,
+          "maxElements": 1
+        },
+        {
+          "id": "main",
+          "enabled": true,
+          "selector": "main > *",
+          "animationName": "motion-fade-in",
+          "durationMs": 1100,
+          "easing": "ease-out",
+          "opacityFrom": 0,
+          "offsetPx": 16,
+          "scaleFrom": 97,
+          "staggerMs": 60,
+          "baseDelayMs": 500,
+          "maxElements": 32
+        },
+        {
+          "id": "bottom-nav",
+          "enabled": true,
+          "selector": "[data-app-load-region=\"bottom-nav\"]",
+          "animationName": "motion-slide-up-in",
+          "durationMs": 1100,
+          "easing": "ease-out",
+          "opacityFrom": 0,
+          "offsetPx": 120,
+          "scaleFrom": 97,
+          "staggerMs": 0,
+          "baseDelayMs": 0,
+          "maxElements": 1
+        }
+      ]
+    }
+  },
+  "updatedAt": "2026-08-03T18:38:39.248Z"
 }

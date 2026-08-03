@@ -2,6 +2,10 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import {
+  PWA_PREFS_CHANGED_EVENT,
+  readBadgeEnabled,
+} from "@/lib/pwa/notification-preferences";
 
 const OrderWindowStatusContext = createContext<boolean | null>(null);
 const DeliveryInRouteContext = createContext(false);
@@ -15,8 +19,10 @@ export function useDeliveryInRoute() {
 }
 
 async function syncOrderWindowBadge(isOpen: boolean) {
+  const badgesEnabled = readBadgeEnabled();
+
   if ("setAppBadge" in navigator) {
-    if (isOpen) {
+    if (badgesEnabled && isOpen) {
       await navigator.setAppBadge();
     } else {
       await navigator.clearAppBadge();
@@ -25,7 +31,10 @@ async function syncOrderWindowBadge(isOpen: boolean) {
 
   if ("serviceWorker" in navigator) {
     const registration = await navigator.serviceWorker.getRegistration();
-    registration?.active?.postMessage({ type: "SYNC_ORDER_WINDOW_BADGE" });
+    registration?.active?.postMessage({
+      type: "SYNC_ORDER_WINDOW_BADGE",
+      badgesEnabled,
+    });
   }
 }
 
@@ -88,10 +97,12 @@ export function OrderWindowStatusProvider({ children }: { children: React.ReactN
     };
 
     document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener(PWA_PREFS_CHANGED_EVENT, sync);
     return () => {
       cancelled = true;
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener(PWA_PREFS_CHANGED_EVENT, sync);
     };
   }, [isSignedIn]);
 

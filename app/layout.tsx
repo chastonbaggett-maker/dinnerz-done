@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { MotionEditorShell } from "@/components/motion/MotionEditorShell";
+import { AppLoadHost } from "@/components/motion/AppLoadHost";
 import { MotionRuntimeStyles } from "@/components/motion/MotionRuntimeStyles";
 import "./globals.css";
 
@@ -47,7 +48,7 @@ export default function RootLayout({
           <CartProvider>
             <MotionEditorShell>
               <MotionRuntimeStyles />
-              {children}
+              <AppLoadHost>{children}</AppLoadHost>
             </MotionEditorShell>
             <Toaster position="top-center" richColors />
           </CartProvider>

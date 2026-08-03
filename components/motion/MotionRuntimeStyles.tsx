@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { documentToStylesheet, emptyMotionDocument } from "@/lib/motion/css";
+import { normalizeMotionDocument } from "@/lib/motion/document";
 import type { MotionSpecDocument } from "@/lib/motion/types";
 
 const LIVE_STYLE_ID = "motion-live-styles";
@@ -16,7 +17,7 @@ export function MotionRuntimeStyles() {
       try {
         const res = await fetch("/api/motion", { cache: "no-store" });
         if (!res.ok) return;
-        const doc = (await res.json()) as MotionSpecDocument;
+        const doc = normalizeMotionDocument((await res.json()) as MotionSpecDocument);
         if (!cancelled) {
           setCss(documentToStylesheet(doc ?? emptyMotionDocument()));
         }

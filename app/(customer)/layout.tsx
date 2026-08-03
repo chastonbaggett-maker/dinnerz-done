@@ -2,12 +2,18 @@ import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { CustomerBottomNav } from "@/components/layout/CustomerBottomNav";
 import { HeaderPageIcon } from "@/components/layout/HeaderPageIcon";
+import { SiteMenuFab } from "@/components/layout/SiteMenuFab";
+import { PageTransitionHost } from "@/components/motion/PageTransitionHost";
+import { InstallHomeHost } from "@/components/pwa/InstallHomeHost";
 import { OrderWindowStatusProvider } from "@/components/pwa/OrderWindowStatusProvider";
 
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
   return (
     <OrderWindowStatusProvider>
-      <header className="sticky top-0 z-30 overflow-hidden rounded-b-2xl border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <header
+        data-app-load-region="header"
+        className="sticky top-0 z-30 overflow-hidden rounded-b-2xl border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      >
         <div className="mx-auto flex h-[4.55rem] max-w-lg items-center justify-between px-5">
           <Link href="/" className="flex shrink-0 items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -25,8 +31,12 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           </div>
         </div>
       </header>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <PageTransitionHost>{children}</PageTransitionHost>
+      </main>
       <CustomerBottomNav />
+      <SiteMenuFab />
+      <InstallHomeHost />
     </OrderWindowStatusProvider>
   );
 }
