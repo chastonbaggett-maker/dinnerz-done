@@ -39,6 +39,11 @@ const links = [
 ] as const;
 
 const EXTRA_SECTION_HEIGHT_PX = 200;
+const TAB_HANDLE_HEIGHT = "2.75rem";
+const TAB_LINK_BLOCK_HEIGHT = "3rem";
+const TAB_ROW_BOTTOM_PADDING = "0.9984rem";
+const TAB_ROW_HEIGHT = `calc(${TAB_HANDLE_HEIGHT} + ${TAB_LINK_BLOCK_HEIGHT} + ${TAB_ROW_BOTTOM_PADDING})`;
+export { TAB_ROW_HEIGHT as CUSTOMER_BOTTOM_NAV_HEIGHT };
 const OPEN_THRESHOLD = 0.28;
 const DRAG_THRESHOLD_PX = 6;
 
@@ -66,6 +71,7 @@ export function CustomerBottomNav() {
   const dragStartY = useRef(0);
   const dragStartProgress = useRef(0);
   const didDragRef = useRef(false);
+  const isDraggingRef = useRef(false);
   const closeTimerRef = useRef<number | null>(null);
   const peekDelayTimerRef = useRef<number | null>(null);
   const peekAnimatingRef = useRef(false);
@@ -193,13 +199,14 @@ export function CustomerBottomNav() {
     dragStartY.current = event.clientY;
     dragStartProgress.current = progress;
     didDragRef.current = false;
+    isDraggingRef.current = true;
     setIsDragging(true);
     setMotionActive(false);
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
   function onHandlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
-    if (!isDragging) return;
+    if (!isDraggingRef.current) return;
     const deltaY = dragStartY.current - event.clientY;
     if (Math.abs(deltaY) > DRAG_THRESHOLD_PX) {
       didDragRef.current = true;
@@ -209,7 +216,8 @@ export function CustomerBottomNav() {
   }
 
   function onHandlePointerUp(event: React.PointerEvent<HTMLDivElement>) {
-    if (!isDragging) return;
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
     setIsDragging(false);
     event.currentTarget.releasePointerCapture(event.pointerId);
 
@@ -244,6 +252,65 @@ export function CustomerBottomNav() {
     />
   );
 
+  const renderNavTab = (
+    { href, label, icon: Icon, ...link }: (typeof links)[number],
+    layoutClassName: string,
+    layoutStyle?: CSSProperties
+  ) => {
+    const active =
+      href === "/"
+        ? pathname === "/"
+        : href === "/orders"
+          ? pathname === "/orders" || pathname.startsWith("/order/")
+          : pathname.startsWith(href);
+    const activeClassName = "activeClassName" in link ? link.activeClassName : undefined;
+
+    return (
+      <Link
+        key={href}
+        href={href}
+        onClick={() => closeShelf(undefined, false)}
+        style={layoutStyle}
+        aria-label={
+          href === "/menu" && orderWindowOpen !== null
+            ? orderWindowOpen
+              ? "Dinner menu — open to order"
+              : "Dinner menu — ordering closed"
+            : href === "/orders" && deliveryInRoute
+              ? "Track order — delivery in route"
+              : undefined
+        }
+        className={cn(
+          "pointer-events-auto flex flex-col items-center gap-0.5 rounded-xl text-[0.65rem] leading-tight transition-colors",
+          layoutClassName,
+          active
+            ? (activeClassName ?? "font-medium text-primary")
+            : "text-muted-foreground"
+        )}
+      >
+        <span className="relative">
+          <Icon className="size-[1.728rem] shrink-0" />
+          {href === "/menu" && orderWindowOpen !== null && (
+            <span
+              aria-hidden
+              className={cn(
+                "absolute -top-0.5 -right-1 size-2 rounded-full ring-2 ring-background",
+                orderWindowOpen ? "bg-emerald-500" : "bg-red-500"
+              )}
+            />
+          )}
+          {href === "/orders" && deliveryInRoute && (
+            <span
+              aria-hidden
+              className="absolute -top-0.5 -right-1 size-2 rounded-full bg-violet-600 ring-2 ring-background dark:bg-violet-400"
+            />
+          )}
+        </span>
+        {label}
+      </Link>
+    );
+  };
+
   return (
     <nav
       data-app-load-region="bottom-nav"
@@ -251,88 +318,61 @@ export function CustomerBottomNav() {
       className="fixed inset-x-0 bottom-0 z-30 overflow-hidden rounded-t-2xl border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
     >
       <div className="mx-auto w-full max-w-lg pb-[env(safe-area-inset-bottom)]">
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label={shelfOpen ? "Pull down to close menu" : "Pull up for more menu options"}
-          aria-expanded={shelfOpen}
-          onPointerDown={onHandlePointerDown}
-          onPointerMove={onHandlePointerMove}
-          onPointerUp={onHandlePointerUp}
-          onPointerCancel={onHandlePointerUp}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              toggleShelf();
-            }
-            if (event.key === "Escape" && shelfOpen) {
-              closeShelf(undefined, true);
-            }
-          }}
-          className="flex touch-none cursor-grab flex-col items-center px-4 pt-2.5 pb-1 active:cursor-grabbing"
-        >
+        <div className="relative" style={{ height: TAB_ROW_HEIGHT }}>
           <div
-            className={cn(
-              "h-1 w-16 rounded-full bg-muted-foreground/35",
-              showHandlePulse && "animate-nav-shelf-handle-pulse"
-            )}
-            aria-hidden
-          />
-        </div>
+            role="button"
+            tabIndex={0}
+            aria-label={shelfOpen ? "Pull down to close menu" : "Pull up for more menu options"}
+            aria-expanded={shelfOpen}
+            onPointerDown={onHandlePointerDown}
+            onPointerMove={onHandlePointerMove}
+            onPointerUp={onHandlePointerUp}
+            onPointerCancel={onHandlePointerUp}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                toggleShelf();
+              }
+              if (event.key === "Escape" && shelfOpen) {
+                closeShelf(undefined, true);
+              }
+            }}
+            className="absolute inset-x-0 top-0 z-30 flex touch-none cursor-grab flex-col items-center px-4 pt-3 active:cursor-grabbing"
+            style={{ height: TAB_HANDLE_HEIGHT }}
+          >
+            <div
+              className={cn(
+                "h-1 w-16 shrink-0 rounded-full bg-muted-foreground/35",
+                showHandlePulse && "animate-nav-shelf-handle-pulse"
+              )}
+              aria-hidden
+            />
+          </div>
 
-        <div className="flex h-[5.2rem] items-stretch px-2">
-          {links.map(({ href, label, icon: Icon, ...link }) => {
-            const active =
-              href === "/"
-                ? pathname === "/"
-                : href === "/orders"
-                  ? pathname === "/orders" || pathname.startsWith("/order/")
-                  : pathname.startsWith(href);
-            const activeClassName = "activeClassName" in link ? link.activeClassName : undefined;
-
-            return (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => closeShelf(undefined, false)}
-                aria-label={
-                  href === "/menu" && orderWindowOpen !== null
-                    ? orderWindowOpen
-                      ? "Dinner menu — open to order"
-                      : "Dinner menu — ordering closed"
-                    : href === "/orders" && deliveryInRoute
-                      ? "Track order — delivery in route"
-                      : undefined
-                }
-                className={cn(
-                  "mx-0.5 flex flex-1 flex-col items-center justify-center gap-1 rounded-xl text-xs transition-colors",
-                  active
-                    ? (activeClassName ?? "font-medium text-primary")
-                    : "text-muted-foreground"
-                )}
-              >
-                <span className="relative">
-                  <Icon className="size-[2.16rem]" />
-                  {href === "/menu" && orderWindowOpen !== null && (
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "absolute -top-0.5 -right-1 size-2 rounded-full ring-2 ring-background",
-                        orderWindowOpen ? "bg-emerald-500" : "bg-red-500"
-                      )}
-                    />
-                  )}
-                  {href === "/orders" && deliveryInRoute && (
-                    <span
-                      aria-hidden
-                      className="absolute -top-0.5 -right-1 size-2 rounded-full bg-violet-600 ring-2 ring-background dark:bg-violet-400"
-                    />
-                  )}
-                </span>
-                {label}
-              </Link>
-            );
-          })}
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-20"
+            style={{ height: TAB_ROW_HEIGHT }}
+          >
+            {links
+              .filter(({ href }) => href === "/" || href === "/orders")
+              .map((entry) =>
+                renderNavTab(
+                  entry,
+                  entry.href === "/"
+                    ? "absolute inset-y-0 left-0 w-1/4 justify-end"
+                    : "absolute inset-y-0 right-0 w-1/4 justify-end",
+                  { paddingBottom: `calc(${TAB_ROW_BOTTOM_PADDING} + 0.375rem)` }
+                )
+              )}
+            <div
+              className="absolute left-1/4 right-1/4 flex items-end px-1 pb-1.5"
+              style={{ height: TAB_LINK_BLOCK_HEIGHT, bottom: TAB_ROW_BOTTOM_PADDING }}
+            >
+              {links
+                .filter(({ href }) => href !== "/" && href !== "/orders")
+                .map((entry) => renderNavTab(entry, "mx-0.5 min-w-0 flex-1 self-end"))}
+            </div>
+          </div>
         </div>
 
         <div

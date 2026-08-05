@@ -6,6 +6,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { formatCents } from "@/lib/dates";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { CUSTOMER_BOTTOM_NAV_HEIGHT } from "@/components/layout/CustomerBottomNav";
 
 export function CartBar() {
   const { itemCount, subtotalCents } = useCart();
@@ -13,7 +14,10 @@ export function CartBar() {
   if (itemCount === 0) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-[5.2rem] z-40 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <div
+      className="fixed inset-x-0 z-40 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      style={{ bottom: CUSTOMER_BOTTOM_NAV_HEIGHT }}
+    >
       <Link
         href="/cart"
         className={cn(

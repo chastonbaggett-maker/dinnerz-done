@@ -54,7 +54,7 @@ export function SiteMenuShelfContent({
               href={href}
               onClick={onNavigate}
               className={cn(
-                "mx-0.5 flex flex-col items-center justify-center gap-1 rounded-xl px-1 py-2.5 text-xs transition-colors",
+                "mx-0.5 flex flex-col items-center gap-1 rounded-xl px-1 pb-2 pt-0 text-xs transition-colors",
                 active
                   ? (activeClassName ?? "font-medium text-primary")
                   : "text-muted-foreground hover:bg-muted/60"
